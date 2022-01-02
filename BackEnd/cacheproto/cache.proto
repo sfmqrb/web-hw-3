@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+
+package usermgmt;
+
+option go_package = "hw3/BackEnd;go_cache_grpc";
+
+service CacheManagement {
+  rpc CacheNoteRPC (CacheRequest) returns (CacheResponse) {}
+}
+//service RequestCache{
+////  rpc CacheNoteRpc (CacheRequest) returns(CacheResponse){}
+//}
+
+message NewUser {
+  string name = 1;
+  int32 age = 2;
+}
+
+message User {
+  string userName = 1;
+  int32 authorId = 2;
+  string password = 3;
+}
+
+message CacheRequest{
+  int32 requestType = 1;
+  string noteId = 2;
+  string authorId = 3;
+  string note = 4;
+}
+message CacheResponse{
+  string note = 1;
+  string noteId = 2;
+  bool exist = 3;
+  bool access = 4;
+  bool missCache = 5;
+}
+
