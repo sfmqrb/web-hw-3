@@ -27,20 +27,20 @@ const (
 
 type user struct {
 	bun.BaseModel `bun:"table:users,alias:u"`
-	userId        int    `bun:"user_id,pk,autoincrement"`
-	userName      string `bun:"user_name,notnull"`
-	password      string `bun:"password,notnull"`
+	UserId        int    `bun:"user_id,pk,autoincrement"`
+	UserName      string `bun:"user_name,notnull"`
+	Password      string `bun:"password,notnull"`
 }
 
 type note struct {
-	bun.BaseModel `bun:"table:notes"`
-	noteId        int    `bun:"note_id,pk,autoincrement"`
-	note          string `bun:"note,notnull"`
-	authorId      int    `bun:"author_id,fk"`
+	bun.BaseModel `bun:"table:notes,alias:u"`
+	NoteId        int    `bun:"note_id,pk,autoincrement"`
+	Note          string `bun:"note,notnull"`
+	AuthorId      int    `bun:"author_id"`
 }
 
 func (u user) String() string {
-	return fmt.Sprintf("User<%d %s %s>", u.userId, u.userName, u.password)
+	return fmt.Sprintf("User<%d %s %s>", u.UserId, u.UserName, u.Password)
 }
 
 const (
@@ -66,13 +66,20 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 	//log.Printf("Received: %v", in.GetName())
 	log.Printf("Recived Cache Request: %v , %v , %d , %v ", in.Note, in.NoteId, in.RequestType, in.AuthorId)
 	var res *pb.CacheNoteResponse
+	res = &pb.CacheNoteResponse{
+		Note:      "",
+		NoteId:    "",
+		Exist:     true,
+		Access:    false,
+		MissCache: false,
+	}
 	switch in.RequestType {
 	case save:
 		aId, _ := strconv.Atoi(in.AuthorId)
 		noteObj := &note{
 			BaseModel: bun.BaseModel{},
-			note:      in.Note,
-			authorId:  aId,
+			Note:      in.Note,
+			AuthorId:  aId,
 		}
 		exec, err := db.NewInsert().Model(noteObj).Exec(ctx)
 		if err != nil {
@@ -86,13 +93,14 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 	case del:
 		nId, _ := strconv.Atoi(in.NoteId)
 		aId, _ := strconv.Atoi(in.AuthorId)
-		noteObj := &note{noteId: nId, authorId: aId}
-		_, err := db.NewDelete().Model(noteObj).WherePK().Exec(ctx)
+		noteObj := &note{NoteId: nId, AuthorId: aId}
+		_, err := db.NewDelete().Model(noteObj).Where("note_id = ? AND author_id = ?", nId, aId).Exec(ctx)
 		if err != nil {
 			res.Exist = true
 			res.Access = true
 		} else {
 			res.Access = false
+
 		}
 	case get:
 		noteObj := new(note)
@@ -101,10 +109,13 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 			fmt.Println(err)
 			res.Exist = false
 		} else {
-			res.Note = noteObj.note
-			res.NoteId = string(rune(noteObj.noteId))
-			res.Exist = true
-			res.Access = in.AuthorId == string(rune(noteObj.authorId))
+			res = &pb.CacheNoteResponse{
+				Note:      noteObj.Note,
+				NoteId:    string(rune(noteObj.NoteId)),
+				Exist:     true,
+				Access:    in.AuthorId == string(rune(noteObj.AuthorId)),
+				MissCache: false,
+			}
 			//todo missCache
 		}
 	}
@@ -125,19 +136,18 @@ func connectToDB() {
 	// Create a Bun db on top of it.
 	db = bun.NewDB(pgdb, pgdialect.New())
 	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
-	userObj := new(user)
-	ctx := context.Background()
-	err := db.NewSelect().Model(userObj).Where("user_id = ?", 1).Scan(ctx)
-	userObj = &user{
-		userId:   10,
-		userName: "soo",
-		password: "soo1234",
-	}
-	res, err := db.NewInsert().Model(userObj).Exec(ctx)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(res)
+	//userObj := new(user)
+	//ctx := context.Background()
+	//err := db.NewSelect().Model(userObj).Where("user_id = ?", 1).Scan(ctx)
+	//userObj = &user{
+	//	UserName: "soo",
+	//	Password: "soo1234",
+	//}
+	//res, err := db.NewInsert().Model(userObj).Exec(ctx)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//fmt.Println(res)
 
 }
 func main() {

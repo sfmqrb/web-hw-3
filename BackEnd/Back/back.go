@@ -89,7 +89,7 @@ func main() {
 	cache_client.Connect()
 	client = cache_client.C
 	contextVar = cache_client.Ctx
-	requestNoteCache(save, "a note by amir", "", "1")
+	requestNoteCache(del, "", "4", "1")
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		//check token
 		loginToken := r.Header.Get("author")
