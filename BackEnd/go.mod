@@ -3,7 +3,7 @@ module hw3/BackEnd
 go 1.16
 
 require (
-	github.com/go-pg/pg/v10 v10.10.6
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/uptrace/bun v1.0.20
 	github.com/uptrace/bun/dialect/pgdialect v1.0.20
 	github.com/uptrace/bun/driver/pgdriver v1.0.20

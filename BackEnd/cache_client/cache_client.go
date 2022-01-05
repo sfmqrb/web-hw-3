@@ -12,22 +12,33 @@ import (
 var conn grpc.ClientConnInterface
 var err error
 
-var c pb.CacheManagementClient
-var ctx context.Context
+var C pb.CacheManagementClient
+var Ctx context.Context
 var cancel context.CancelFunc
 
-type CacheResponse struct {
+type CacheNoteResponse struct {
 	Note      string
 	NoteId    string
 	Exist     bool
 	Access    bool
 	MissCache bool
 }
-type CacheRequest struct {
+type CacheNoteRequest struct {
 	RequestType int
 	NoteId      string
 	AuthorId    string
 	Note        string
+}
+type CacheLoginRequest struct {
+	RequestType int
+	User        string
+	Pass        string
+}
+type CacheLoginResponse struct {
+	UserId    string
+	WrongPass bool
+	Exist     bool
+	MissCache bool
 }
 
 const (
@@ -37,7 +48,7 @@ const (
 func main() {
 	fmt.Println("in client main")
 	Connect()
-	SendRequestCache(CacheRequest{
+	SendNoteRequestCache(CacheNoteRequest{
 		RequestType: 0,
 		NoteId:      "n id",
 		AuthorId:    "a id",
@@ -49,19 +60,18 @@ func Connect() {
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	c = pb.NewCacheManagementClient(conn)
-	ctx, _ = context.WithTimeout(context.Background(), time.Second)
+	C = pb.NewCacheManagementClient(conn)
+	Ctx, _ = context.WithTimeout(context.Background(), time.Second)
 }
-func SendRequestCache(cReq CacheRequest) CacheResponse {
-
-	res, err := c.CacheNoteRPC(ctx, &pb.CacheRequest{RequestType: int32(cReq.RequestType),
+func SendNoteRequestCache(cReq CacheNoteRequest) CacheNoteResponse {
+	res, err := C.CacheNoteRPC(Ctx, &pb.CacheNoteRequest{RequestType: int32(cReq.RequestType),
 		NoteId:   cReq.NoteId,
 		AuthorId: cReq.AuthorId,
 		Note:     cReq.Note})
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	cRes := CacheResponse{
+	cRes := CacheNoteResponse{
 		Note:      res.Note,
 		NoteId:    res.NoteId,
 		Exist:     res.Exist,
@@ -69,5 +79,21 @@ func SendRequestCache(cReq CacheRequest) CacheResponse {
 		MissCache: res.MissCache,
 	}
 	log.Printf("%t %t %v %t ", cRes.Exist, cRes.Access, cRes.Note, cRes.MissCache)
+	return cRes
+}
+func SendLoginRequestCache(cReq CacheLoginRequest) CacheLoginResponse {
+	res, err := C.CacheLoginRPC(Ctx, &pb.CacheLoginRequest{RequestType: int32(cReq.RequestType),
+		User: cReq.User,
+		Pass: cReq.Pass,
+	})
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	cRes := CacheLoginResponse{
+		UserId:    res.UserId,
+		WrongPass: res.WrongPass,
+		Exist:     res.Exist,
+		MissCache: res.MissCache,
+	}
 	return cRes
 }
