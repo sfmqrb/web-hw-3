@@ -21,7 +21,7 @@ const (
 	del  = 2
 	get  = 3
 	// action types of cache login request
-	signIn = 1
+	Login  = 1
 	signUp = 2
 )
 
@@ -55,12 +55,43 @@ var db *bun.DB
 
 func (s *CacheManagementServer) CacheLoginRPC(ctx context.Context, in *pb.CacheLoginRequest) (*pb.CacheLoginResponse, error) {
 	//todo handle request
-	return &pb.CacheLoginResponse{
-		UserId:    "3",
-		WrongPass: false,
-		Exist:     false,
-		MissCache: false,
-	}, nil
+	var res *pb.CacheLoginResponse
+	res = &pb.CacheLoginResponse{}
+	switch in.RequestType {
+	case Login:
+		userObj := &user{}
+		err := db.NewSelect().Model(userObj).Where("user_name = ? AND password = ?", in.User, in.Pass).Scan(ctx)
+		if err != nil {
+			fmt.Println(err)
+			res.WrongPass = true
+		} else {
+			res.UserId = strconv.Itoa(userObj.UserId)
+			res.Exist = true
+		}
+	case signUp:
+		userObj := &user{}
+		err := db.NewSelect().Model(userObj).Where("user_name = ?", in.User).Scan(ctx)
+		if err == nil {
+			res.Exist = true
+		} else if err == sql.ErrNoRows {
+			res.Exist = false
+			userObj = &user{
+				BaseModel: bun.BaseModel{},
+				UserName:  in.User,
+				Password:  in.Pass,
+			}
+			exec, err := db.NewInsert().Model(userObj).Exec(ctx)
+			if err != nil {
+				id, err := exec.LastInsertId()
+				if err != nil {
+					fmt.Println(err)
+					return nil, err
+				}
+				res.UserId = strconv.FormatInt(id, 10)
+			}
+		}
+	}
+	return res, nil
 }
 func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNoteRequest) (*pb.CacheNoteResponse, error) {
 	//log.Printf("Received: %v", in.GetName())
@@ -111,9 +142,9 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 		} else {
 			res = &pb.CacheNoteResponse{
 				Note:      noteObj.Note,
-				NoteId:    string(rune(noteObj.NoteId)),
+				NoteId:    strconv.Itoa(noteObj.NoteId),
 				Exist:     true,
-				Access:    in.AuthorId == string(rune(noteObj.AuthorId)),
+				Access:    in.AuthorId == strconv.Itoa(noteObj.AuthorId),
 				MissCache: false,
 			}
 			//todo missCache
@@ -121,13 +152,7 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 	}
 	//var user_id int32 = int32(rand.Intn(100))
 	//todo handle request
-	return &pb.CacheNoteResponse{
-		Note:      "amir",
-		NoteId:    "6556AC5",
-		Exist:     false,
-		Access:    true,
-		MissCache: false,
-	}, nil
+	return res, nil
 }
 func connectToDB() {
 	// Open a PostgreSQL database.
@@ -136,19 +161,8 @@ func connectToDB() {
 	// Create a Bun db on top of it.
 	db = bun.NewDB(pgdb, pgdialect.New())
 	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
-	//userObj := new(user)
-	//ctx := context.Background()
-	//err := db.NewSelect().Model(userObj).Where("user_id = ?", 1).Scan(ctx)
-	//userObj = &user{
-	//	UserName: "soo",
-	//	Password: "soo1234",
-	//}
-	//res, err := db.NewInsert().Model(userObj).Exec(ctx)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//fmt.Println(res)
-
+	//userObj := &user{}
+	//err := db.NewSelect().Model(userObj).Where("user_name = ? AND password = ?", "amir", "Xamm2666").Scan(context.Context())
 }
 func main() {
 	connectToDB()

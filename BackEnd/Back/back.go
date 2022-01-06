@@ -18,8 +18,8 @@ const (
 	save = 1
 	del  = 2
 	get  = 3
-	// action types of cache login request
-	signIn = 1
+	// action types of cache Login request
+	Login  = 1
 	signUp = 2
 	// response types of response
 	successful    = 0
@@ -89,14 +89,17 @@ func main() {
 	cache_client.Connect()
 	client = cache_client.C
 	contextVar = cache_client.Ctx
-	requestNoteCache(del, "", "4", "1")
+	loginRes := requestLoginCache(signUp, "amir123", "Xamir266")
+	fmt.Println(loginRes.Exist)
+	fmt.Println(loginRes.WrongPass)
+	fmt.Println(loginRes.UserId)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		//check token
 		loginToken := r.Header.Get("author")
 		jwt := tokenIdMap[loginToken]
 		var authorId string
 		if jwt == "" {
-			//login or create user
+			//Login or create user
 			handleLoginRequest(w, r)
 			return
 		} else {
@@ -144,7 +147,7 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	cRes := requestLoginCache(loginData.ActionType, loginData.UserName, loginData.Password)
 	var res response
-	if loginData.ActionType == signIn || cRes.Exist {
+	if loginData.ActionType == Login || cRes.Exist {
 		if cRes.WrongPass {
 			res.responseType = wrongPass
 			w.WriteHeader(http.StatusNoContent)
