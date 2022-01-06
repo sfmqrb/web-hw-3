@@ -56,6 +56,9 @@ type response struct {
 }
 
 //todo config file
+var jwtTries map[string]int = map[string]int{}
+
+var minuteTryLimit int = 10
 var hmacSampleSecret = []byte("my_secret_key")
 var client = cache_client.C
 var contextVar = cache_client.Ctx
@@ -69,6 +72,13 @@ func createJWT(sessionLength int, authorId string) string {
 		"authorId": authorId,
 	})
 	tokenString, _ := token.SignedString(hmacSampleSecret)
+	jwtTries[tokenString] += 1
+	ticker := time.NewTicker(time.Minute)
+	go func(ts string, ticker *time.Ticker) {
+		for range ticker.C {
+			jwtTries[ts] = 0
+		}
+	}(tokenString, ticker)
 	return tokenString
 }
 func verifyJWT(tokenString string) string {
@@ -86,6 +96,14 @@ func verifyJWT(tokenString string) string {
 	}
 }
 func main() {
+	ticker := time.NewTicker(time.Minute * time.Duration(20))
+	go func(ticker *time.Ticker) {
+		for range ticker.C {
+			for ts := range jwtTries {
+				jwtTries[ts] = 0
+			}
+		}
+	}(ticker)
 	cache_client.Connect()
 	client = cache_client.C
 	contextVar = cache_client.Ctx
