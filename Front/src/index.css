@@ -11,3 +11,13 @@ body {
 .clickable {
   cursor: pointer;
 }
+
+
+.clampContainer {
+  display: -webkit-box;
+  -webkit-line-clamp: 0;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 95px;
+
+}

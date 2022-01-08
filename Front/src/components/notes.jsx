@@ -15,7 +15,7 @@ class Notes extends Component {
     notes: [],
     types: [],
     currentPage: 1,
-    pageSize: 5,
+    pageSize: 4,
     searchQuery: "",
     selectedType: null,
     sortColumn: { path: "title", order: "asc" },
