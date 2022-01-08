@@ -15,6 +15,7 @@ service CacheManagement {
 message Note{
   string text = 1;
   string title = 2;
+  string id = 3;
 
 }
 message CacheNoteRequest{
@@ -34,7 +35,7 @@ message CacheNoteResponse{
 }
 message CacheLoginRequest{
   int32 RequestType = 1;
-  string email = 4;
+  string name = 4;
   string user = 2;
   string pass = 3;
 }

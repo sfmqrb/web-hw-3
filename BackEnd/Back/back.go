@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	// action types of cache note requestLogin
+	// action types of cache text requestLogin
 	Save = 1
 	Del  = 2
 	Get  = 3
@@ -40,26 +40,26 @@ var requestTypeMap = map[string]int{
 }
 
 type requestNote struct {
-	title string `json:"title"`
-	text  string `json:"text"`
+	Title string `json:"title"`
+	Text  string `json:"text"`
 }
 type requestLogin struct {
 	Name     string `json:"name"`
-	Email    string `json:"email"`
+	UserName string `json:"username"`
 	Password string `json:"password"`
 }
 type responseLogin struct {
-	jwt       string         `json:"jwt"`
+	Jwt       string         `json:"jwt"`
 	Name      string         `json:"name"`
 	Notes     []responseNote `json:"notes"`
-	missCache bool           `json:"misscache"`
+	MissCache bool           `json:"misscache"`
 }
 
 type responseNote struct {
-	note      string `json:"note"`
-	title     string `json:"title"`
-	noteId    string `json:"noteid"`
-	missCache bool   `json:"misscache"`
+	Text      string `json:"text"`
+	Title     string `json:"title"`
+	NoteId    string `json:"noteid"`
+	MissCache bool   `json:"misscache"`
 }
 
 //todo config file
@@ -68,8 +68,20 @@ var jwtTime = map[string]time.Time{}
 
 var minuteTryLimit int = 10
 var hmacSampleSecret = []byte("my_secret_key")
-var client = cache_client.C
-var contextVar = cache_client.Ctx
+
+func toMyNote(notes []*pb.Note) []responseNote {
+	var pbNotes []responseNote
+	pbNotes = make([]responseNote, len(notes))
+	for i := 0; i < len(notes); i++ {
+		pbNotes[i] = responseNote{
+			Text:      notes[i].Text,
+			Title:     notes[i].Title,
+			NoteId:    notes[i].Id,
+			MissCache: false,
+		}
+	}
+	return pbNotes
+}
 
 func createJWT(sessionLength int, authorId string) string {
 	now := time.Now()
@@ -85,6 +97,7 @@ func createJWT(sessionLength int, authorId string) string {
 	go func(ts string, ticker *time.Ticker) {
 		for range ticker.C {
 			jwtTries[ts] = 0
+			fmt.Println("token tick " + ts)
 		}
 	}(tokenString, ticker)
 	return tokenString
@@ -130,6 +143,7 @@ func main() {
 			} else if authorId == "l" {
 				//try limit reached
 				w.WriteHeader(http.StatusTooManyRequests)
+				return
 			}
 			//jwt real
 		}
@@ -172,8 +186,8 @@ func preLoad() {
 		}
 	}(ticker)
 	cache_client.Connect()
-	client = cache_client.C
-	contextVar = cache_client.Ctx
+	r := cache_client.RequestLoginCache(Login, "amir", "", "Xamm2666")
+	fmt.Println(r.Notes)
 	//loginRes := requestLoginCache(signUp, "amir123", "Xamir266")
 	//fmt.Println(loginRes.Exist)
 	//fmt.Println(loginRes.WrongPass)
@@ -198,7 +212,11 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cRes := cache_client.RequestLoginCache(ActionType, loginData.Name, loginData.Email, loginData.Password)
+	cRes := cache_client.RequestLoginCache(ActionType, loginData.UserName, loginData.Name, loginData.Password)
+	if cRes == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	var res responseLogin
 	if ActionType == Login {
 		if cRes.Exist {
@@ -208,7 +226,8 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusAccepted)
 				//todo config session length
 				jwt := createJWT(20, cRes.UserId)
-				res.jwt = jwt
+				res.Jwt = jwt
+				res.Notes = toMyNote(cRes.Notes)
 			}
 		} else {
 			w.WriteHeader(http.StatusNotAcceptable)
@@ -218,30 +237,35 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotAcceptable)
 		} else {
 			jwt := createJWT(20, cRes.UserId)
-			res.jwt = jwt
+			res.Jwt = jwt
 			w.WriteHeader(http.StatusCreated)
 		}
 	}
 	resJson, _ := json.Marshal(res)
-	_, err = w.Write(resJson)
-	if err != nil {
+	fmt.Println(res)
+	b, errw := w.Write(resJson)
+	fmt.Println(b)
+	if errw != nil {
 		return
 	}
 	return
 }
 
 func extractRequest(w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return "", "", "", true
-	}
+	//if r.URL.Path != "/" {
+	//	http.NotFound(w, r)
+	//	return "", "", "", true
+	//}
 	var noteId string
 	urlList := strings.Split(r.URL.Path, "/")
+	fmt.Println(urlList)
+	fmt.Println(len(urlList))
 	if len(urlList) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return "", "", "", true
-	} else if len(urlList) == 2 {
-		noteId = urlList[1]
+	} else if len(urlList) == 3 {
+		noteId = urlList[2]
+		fmt.Println(noteId)
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 		return "", "", "", true
@@ -249,22 +273,24 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (string, string, str
 	var noteJson string
 	noteJson = getRequestBody(r)
 	var noteObj requestNote
-	err := json.Unmarshal([]byte(noteJson), &requestNote{})
+	err := json.Unmarshal([]byte(noteJson), &noteObj)
 	if err != nil {
 		return "", "", "", false
 	}
-	return noteId, noteObj.text, noteObj.title, false
+	return noteId, noteObj.Text, noteObj.Title, false
 }
 
 func handleNoteRequest(w http.ResponseWriter, r *http.Request, cRes *pb.CacheNoteResponse) (responseNote, bool) {
 	var res responseNote
+	fmt.Println(cRes.Access)
+	fmt.Println(cRes.Exist)
 	switch r.Method {
 	case http.MethodGet:
-		// Get the note.
-		res.missCache = cRes.MissCache
+		// Get the text.
+		res.MissCache = cRes.MissCache
 		if cRes.Access {
 			if cRes.Exist {
-				res.note = cRes.Note
+				res.Text = cRes.Note
 				w.WriteHeader(http.StatusFound)
 			} else {
 				w.WriteHeader(http.StatusNoContent)
@@ -273,11 +299,11 @@ func handleNoteRequest(w http.ResponseWriter, r *http.Request, cRes *pb.CacheNot
 			w.WriteHeader(http.StatusUnauthorized)
 		}
 	case http.MethodPost:
-		// Create a new note.
+		// Create a new text.
 		w.WriteHeader(http.StatusAccepted)
-		res.noteId = cRes.NoteId
+		res.NoteId = cRes.NoteId
 	case http.MethodPut:
-		// Update an existing note.
+		// Update an existing text.
 		if cRes.Access {
 			if cRes.Exist {
 				w.WriteHeader(http.StatusAccepted)
@@ -288,15 +314,16 @@ func handleNoteRequest(w http.ResponseWriter, r *http.Request, cRes *pb.CacheNot
 			w.WriteHeader(http.StatusUnauthorized)
 		}
 	case http.MethodDelete:
-		// Remove the note.
-		if cRes.Access {
-			if cRes.Exist {
+		// Remove the text.
+
+		if cRes.Exist {
+			if cRes.Access {
 				w.WriteHeader(http.StatusAccepted)
 			} else {
-				w.WriteHeader(http.StatusNoContent)
+				w.WriteHeader(http.StatusUnauthorized)
 			}
 		} else {
-			w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusNoContent)
 		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

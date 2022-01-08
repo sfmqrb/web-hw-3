@@ -50,7 +50,8 @@ func Connect() {
 		log.Fatalf("did not connect: %v", err)
 	}
 	C = pb.NewCacheManagementClient(conn)
-	Ctx, _ = context.WithTimeout(context.Background(), time.Second)
+	//todo
+	Ctx, _ = context.WithTimeout(context.Background(), time.Minute)
 }
 func RequestNoteCache(requestType int, note string, noteTitle string, noteId string, authorId string) *pb.CacheNoteResponse {
 	cacheNoteResponse, err := C.CacheNoteRPC(Ctx, &pb.CacheNoteRequest{
@@ -65,13 +66,15 @@ func RequestNoteCache(requestType int, note string, noteTitle string, noteId str
 	}
 	return cacheNoteResponse
 }
-func RequestLoginCache(requestType int, userName string, email string, pass string) *pb.CacheLoginResponse {
-	cacheLoginResponse, err := C.CacheLoginRPC(Ctx, &pb.CacheLoginRequest{
+func RequestLoginCache(requestType int, userName string, name string, pass string) *pb.CacheLoginResponse {
+	Ctx, _ = context.WithTimeout(context.Background(), time.Minute)
+	loginReq := &pb.CacheLoginRequest{
 		RequestType: int32(requestType),
 		User:        userName,
 		Pass:        pass,
-		Email:       email,
-	})
+		Name:        name,
+	}
+	cacheLoginResponse, err := C.CacheLoginRPC(Ctx, loginReq)
 	if err != nil {
 		return nil
 	}
