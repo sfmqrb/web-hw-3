@@ -1,4 +1,4 @@
-import * as typesAPI from "./fakeTypeService";
+import * as typesAPI from "./typeService";
 
 const notes = [
   {

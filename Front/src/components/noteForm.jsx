@@ -2,7 +2,7 @@ import React from "react";
 import Joi from "joi-browser";
 import Form from "./common/form";
 import { getNote, saveNote } from "../services/fakeNoteService";
-import { getTypes } from "../services/fakeTypeService";
+import { getTypes } from "../services/typeService";
 
 class NoteForm extends Form {
   state = {

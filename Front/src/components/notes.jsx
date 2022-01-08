@@ -4,7 +4,7 @@ import NotesTable from "./notesTable";
 import ListGroup from "./common/listGroup";
 import Pagination from "./common/pagination";
 import { getNotes, deleteNote } from "../services/fakeNoteService";
-import { getTypes } from "../services/fakeTypeService";
+import { getTypes } from "../services/typeService";
 import { paginate } from "../utils/paginate";
 import _ from "lodash";
 import SearchBox from "./searchBox";
