@@ -6,7 +6,7 @@ import Select from "./select";
 class Form extends Component {
   state = {
     data: {},
-    errors: {}
+    errors: {},
   };
 
   validate = () => {
@@ -26,7 +26,7 @@ class Form extends Component {
     return error ? error.details[0].message : null;
   };
 
-  handleSubmit = e => {
+  handleSubmit = (e) => {
     e.preventDefault();
 
     const errors = this.validate();
@@ -71,11 +71,12 @@ class Form extends Component {
     );
   }
 
-  renderInput(name, label, type = "text") {
+  renderInput(name, label, type = "text", textType = "text") {
     const { data, errors } = this.state;
 
     return (
       <Input
+        textType={textType}
         type={type}
         name={name}
         value={data[name]}

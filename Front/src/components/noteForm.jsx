@@ -58,7 +58,7 @@ class NoteForm extends Form {
         <form onSubmit={this.handleSubmit}>
           {this.renderInput("title", "Title")}
           {this.renderSelect("typeId", "Type", this.state.types)}
-          {this.renderInput("text", "Text")}
+          {this.renderInput("text", "Text", "text", "textarea")}
           {this.renderButton("Save")}
         </form>
       </div>
