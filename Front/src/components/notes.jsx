@@ -8,6 +8,7 @@ import { getTypes } from "../services/typeService";
 import { paginate } from "../utils/paginate";
 import _ from "lodash";
 import SearchBox from "./searchBox";
+import "bootstrap/dist/css/bootstrap-grid.css";
 
 class Notes extends Component {
   state = {
@@ -22,23 +23,17 @@ class Notes extends Component {
 
   componentDidMount() {
     const types = [{ _id: "", name: "All Types" }, ...getTypes()];
-
     this.setState({ notes: getNotes(), types });
   }
 
   handleDelete = (note) => {
+    // locally delete
     const notes = this.state.notes.filter((m) => m._id !== note._id);
     this.setState({ notes });
-
-    deleteNote(note._id);
-  };
-
-  handleLike = (note) => {
-    const notes = [...this.state.notes];
-    const index = notes.indexOf(note);
-    notes[index] = { ...notes[index] };
-    notes[index].liked = !notes[index].liked;
-    this.setState({ notes });
+    // server delete
+    console.log(note);
+    let result = deleteNote(note._id);
+    console.log(result);
   };
 
   handlePageChange = (page) => {
@@ -94,21 +89,29 @@ class Notes extends Component {
 
     return (
       <div className="row">
-        <div className="col-3">
+        <div className="col-3 mt-5">
           <ListGroup
             items={this.state.types}
             selectedItem={this.state.selectedType}
             onItemSelect={this.handleTypeSelect}
+            style={{ justifyContent: "center" }}
           />
         </div>
         <div className="col">
-          <Link
-            to="/notes/new"
-            className="btn btn-primary"
-            style={{ marginBottom: 20 }}>
-            New Note
-          </Link>
-          <p>Showing {totalCount} notes in the database.</p>
+          <div className="mt-5">
+            <div>
+              <Link
+                to="/notes/new"
+                className="btn btn-primary float-right"
+                style={{
+                  marginBottom: 20,
+                  marginLeft: 20,
+                }}>
+                New Note
+              </Link>
+            </div>
+            <p>Showing {totalCount} notes in the database.</p>
+          </div>
           <SearchBox value={searchQuery} onChange={this.handleSearch} />
           <NotesTable
             notes={notes}

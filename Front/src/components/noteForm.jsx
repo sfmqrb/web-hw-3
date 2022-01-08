@@ -48,6 +48,7 @@ class NoteForm extends Form {
     saveNote(this.state.data);
 
     this.props.history.push("/notes");
+    // backend
   };
 
   render() {
@@ -59,7 +60,7 @@ class NoteForm extends Form {
           {this.renderSelect("typeId", "Type", this.state.types)}
           {this.renderInput("text", "Text")}
           {this.renderButton("Save")}
-        </form>  
+        </form>
       </div>
     );
   }

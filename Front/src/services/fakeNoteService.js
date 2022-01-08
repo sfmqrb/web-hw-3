@@ -58,6 +58,8 @@ const notes = [
 ];
 
 export function getNotes() {
+  // if logged in ok else register or logged in
+  // return {};
   return notes;
 }
 
@@ -82,5 +84,6 @@ export function saveNote(note) {
 export function deleteNote(id) {
   let noteInDb = notes.find((m) => m._id === id);
   notes.splice(notes.indexOf(noteInDb), 1);
+  // backend
   return noteInDb;
 }
