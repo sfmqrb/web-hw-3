@@ -1,8 +1,8 @@
 export const types = [
-  { _id: "5b21ca3eeb7f6fbccd471818", name: "Personal" },
-  { _id: "5b21ca3eeb7f6fbccd471814", name: "Work" },
-  { _id: "5b21ca3eeb7f6fbccd471820", name: "Family" },
-  { _id: "5b21ca3eeb7f6fbccd471821", name: "Others" },
+  { _id: "Personal", name: "Personal" },
+  { _id: "Work", name: "Work" },
+  { _id: "Family", name: "Family" },
+  { _id: "Others", name: "Others" },
 ];
 
 export function getTypes() {
