@@ -8,12 +8,14 @@ class NotesTable extends Component {
       path: "title",
       label: "Title",
       content: (note) => <Link to={`/notes/${note._id}`}>{note.title}</Link>,
+      sizeClass: "col-4",
     },
     { path: "type.name", label: "Type" },
     {
       path: "text",
       label: "Text",
       content: (note) => note.text,
+      sizeClass: "col-12",
     },
     {
       key: "delete",
@@ -24,6 +26,7 @@ class NotesTable extends Component {
           Delete
         </button>
       ),
+      sizeClass: "",
     },
   ];
 

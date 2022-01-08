@@ -59,7 +59,7 @@ class NoteForm extends Form {
           {this.renderSelect("typeId", "Type", this.state.types)}
           {this.renderInput("text", "Text")}
           {this.renderButton("Save")}
-        </form>
+        </form>  
       </div>
     );
   }
