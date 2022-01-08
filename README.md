@@ -2,7 +2,10 @@
 
 ## Front
 
-first run:
+First run:
+
 `npm i`
-finally run:
+
+Finally run:
+
 `npm start`
