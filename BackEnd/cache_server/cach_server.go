@@ -13,6 +13,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 	save = 1
 	del  = 2
 	get  = 3
+	edit = 4
 	// action types of cache login request
 	Login  = 1
 	signUp = 2
@@ -29,6 +31,7 @@ type user struct {
 	bun.BaseModel `bun:"table:users,alias:u"`
 	UserId        int    `bun:"user_id,pk,autoincrement"`
 	UserName      string `bun:"user_name,notnull"`
+	Email         string `bun:"email,notnull"`
 	Password      string `bun:"password,notnull"`
 }
 
@@ -36,6 +39,7 @@ type note struct {
 	bun.BaseModel `bun:"table:notes,alias:u"`
 	NoteId        int    `bun:"note_id,pk,autoincrement"`
 	Note          string `bun:"note,notnull"`
+	NoteTitle     string `bun:"title,notnull"`
 	AuthorId      int    `bun:"author_id"`
 }
 
@@ -53,8 +57,20 @@ type CacheManagementServer struct {
 
 var db *bun.DB
 
-func (s *CacheManagementServer) CacheLoginRPC(ctx context.Context, in *pb.CacheLoginRequest) (*pb.CacheLoginResponse, error) {
+func toMyNote(notes []note) []*pb.Note {
+	var pbNotes []*pb.Note
+	pbNotes = make([]*pb.Note, len(notes))
+	for i := 0; i < len(notes); i++ {
+		pbNotes = append(pbNotes, &pb.Note{
+			Text:  notes[i].Note,
+			Title: notes[i].NoteTitle,
+		})
+	}
+	return pbNotes
+}
+func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.CacheManagement_CacheLoginRPCServer) error {
 	//todo handle request
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
 	var res *pb.CacheLoginResponse
 	res = &pb.CacheLoginResponse{}
 	switch in.RequestType {
@@ -67,6 +83,9 @@ func (s *CacheManagementServer) CacheLoginRPC(ctx context.Context, in *pb.CacheL
 		} else {
 			res.UserId = strconv.Itoa(userObj.UserId)
 			res.Exist = true
+			var notes []note
+			err = db.NewSelect().Model(&notes).Where("author_id = ?", res.UserId).Scan(ctx)
+			res.Notes = toMyNote(notes)
 		}
 	case signUp:
 		userObj := &user{}
@@ -85,13 +104,17 @@ func (s *CacheManagementServer) CacheLoginRPC(ctx context.Context, in *pb.CacheL
 				id, err := exec.LastInsertId()
 				if err != nil {
 					fmt.Println(err)
-					return nil, err
+					return err
 				}
 				res.UserId = strconv.FormatInt(id, 10)
 			}
 		}
 	}
-	return res, nil
+	err := a.Send(res)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNoteRequest) (*pb.CacheNoteResponse, error) {
 	//log.Printf("Received: %v", in.GetName())
@@ -125,7 +148,12 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 		nId, _ := strconv.Atoi(in.NoteId)
 		aId, _ := strconv.Atoi(in.AuthorId)
 		noteObj := &note{NoteId: nId, AuthorId: aId}
-		_, err := db.NewDelete().Model(noteObj).Where("note_id = ? AND author_id = ?", nId, aId).Exec(ctx)
+		var err error
+		if aId == 0 {
+			_, err = db.NewDelete().Model(noteObj).Where("note_id = ?", nId).Exec(ctx)
+		} else {
+			_, err = db.NewDelete().Model(noteObj).Where("note_id = ? AND author_id = ?", nId, aId).Exec(ctx)
+		}
 		if err != nil {
 			res.Exist = true
 			res.Access = true
@@ -144,10 +172,33 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 				Note:      noteObj.Note,
 				NoteId:    strconv.Itoa(noteObj.NoteId),
 				Exist:     true,
-				Access:    in.AuthorId == strconv.Itoa(noteObj.AuthorId),
+				Access:    in.AuthorId == strconv.Itoa(noteObj.AuthorId) || strconv.Itoa(noteObj.AuthorId) == "0",
 				MissCache: false,
 			}
 			//todo missCache
+		}
+	case edit:
+		aId, _ := strconv.Atoi(in.AuthorId)
+		nId, _ := strconv.Atoi(in.NoteId)
+		noteObj := &note{
+			BaseModel: bun.BaseModel{},
+			Note:      in.Note,
+			NoteId:    nId,
+			AuthorId:  aId,
+		}
+		exec, err := db.NewUpdate().Model(noteObj).Exec(ctx)
+		if err != nil {
+			id, err := exec.LastInsertId()
+			res.Access = true
+			res.Exist = true
+			if err != nil {
+				fmt.Println(err)
+				return nil, err
+			}
+			res.NoteId = strconv.FormatInt(id, 10)
+		} else {
+			res.Access = false
+			res.Exist = false
 		}
 	}
 	//var user_id int32 = int32(rand.Intn(100))
