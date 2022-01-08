@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CacheManagementClient interface {
 	CacheNoteRPC(ctx context.Context, in *CacheNoteRequest, opts ...grpc.CallOption) (*CacheNoteResponse, error)
-	CacheLoginRPC(ctx context.Context, in *CacheLoginRequest, opts ...grpc.CallOption) (*CacheLoginResponse, error)
+	CacheLoginRPC(ctx context.Context, in *CacheLoginRequest, opts ...grpc.CallOption) (CacheManagement_CacheLoginRPCClient, error)
 }
 
 type cacheManagementClient struct {
@@ -39,13 +39,36 @@ func (c *cacheManagementClient) CacheNoteRPC(ctx context.Context, in *CacheNoteR
 	return out, nil
 }
 
-func (c *cacheManagementClient) CacheLoginRPC(ctx context.Context, in *CacheLoginRequest, opts ...grpc.CallOption) (*CacheLoginResponse, error) {
-	out := new(CacheLoginResponse)
-	err := c.cc.Invoke(ctx, "/usermgmt.CacheManagement/CacheLoginRPC", in, out, opts...)
+func (c *cacheManagementClient) CacheLoginRPC(ctx context.Context, in *CacheLoginRequest, opts ...grpc.CallOption) (CacheManagement_CacheLoginRPCClient, error) {
+	stream, err := c.cc.NewStream(ctx, &CacheManagement_ServiceDesc.Streams[0], "/usermgmt.CacheManagement/CacheLoginRPC", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &cacheManagementCacheLoginRPCClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type CacheManagement_CacheLoginRPCClient interface {
+	Recv() (*CacheLoginResponse, error)
+	grpc.ClientStream
+}
+
+type cacheManagementCacheLoginRPCClient struct {
+	grpc.ClientStream
+}
+
+func (x *cacheManagementCacheLoginRPCClient) Recv() (*CacheLoginResponse, error) {
+	m := new(CacheLoginResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // CacheManagementServer is the server API for CacheManagement service.
@@ -53,7 +76,7 @@ func (c *cacheManagementClient) CacheLoginRPC(ctx context.Context, in *CacheLogi
 // for forward compatibility
 type CacheManagementServer interface {
 	CacheNoteRPC(context.Context, *CacheNoteRequest) (*CacheNoteResponse, error)
-	CacheLoginRPC(context.Context, *CacheLoginRequest) (*CacheLoginResponse, error)
+	CacheLoginRPC(*CacheLoginRequest, CacheManagement_CacheLoginRPCServer) error
 	mustEmbedUnimplementedCacheManagementServer()
 }
 
@@ -64,8 +87,8 @@ type UnimplementedCacheManagementServer struct {
 func (UnimplementedCacheManagementServer) CacheNoteRPC(context.Context, *CacheNoteRequest) (*CacheNoteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CacheNoteRPC not implemented")
 }
-func (UnimplementedCacheManagementServer) CacheLoginRPC(context.Context, *CacheLoginRequest) (*CacheLoginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CacheLoginRPC not implemented")
+func (UnimplementedCacheManagementServer) CacheLoginRPC(*CacheLoginRequest, CacheManagement_CacheLoginRPCServer) error {
+	return status.Errorf(codes.Unimplemented, "method CacheLoginRPC not implemented")
 }
 func (UnimplementedCacheManagementServer) mustEmbedUnimplementedCacheManagementServer() {}
 
@@ -98,22 +121,25 @@ func _CacheManagement_CacheNoteRPC_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CacheManagement_CacheLoginRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CacheLoginRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _CacheManagement_CacheLoginRPC_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(CacheLoginRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(CacheManagementServer).CacheLoginRPC(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/usermgmt.CacheManagement/CacheLoginRPC",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CacheManagementServer).CacheLoginRPC(ctx, req.(*CacheLoginRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(CacheManagementServer).CacheLoginRPC(m, &cacheManagementCacheLoginRPCServer{stream})
+}
+
+type CacheManagement_CacheLoginRPCServer interface {
+	Send(*CacheLoginResponse) error
+	grpc.ServerStream
+}
+
+type cacheManagementCacheLoginRPCServer struct {
+	grpc.ServerStream
+}
+
+func (x *cacheManagementCacheLoginRPCServer) Send(m *CacheLoginResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 // CacheManagement_ServiceDesc is the grpc.ServiceDesc for CacheManagement service.
@@ -127,11 +153,13 @@ var CacheManagement_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "CacheNoteRPC",
 			Handler:    _CacheManagement_CacheNoteRPC_Handler,
 		},
+	},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "CacheLoginRPC",
-			Handler:    _CacheManagement_CacheLoginRPC_Handler,
+			StreamName:    "CacheLoginRPC",
+			Handler:       _CacheManagement_CacheLoginRPC_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "cache.proto",
 }
