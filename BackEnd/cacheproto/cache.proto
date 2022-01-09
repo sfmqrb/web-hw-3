@@ -42,6 +42,7 @@ message CacheLoginRequest{
 message CacheLoginResponse{
   string UserId = 1;
   string UserName = 2;
+  string Name = 7;
   repeated Note notes = 6;
   bool WrongPass = 3;
   bool Exist = 4;
