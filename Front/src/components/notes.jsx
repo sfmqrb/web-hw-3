@@ -27,7 +27,10 @@ class Notes extends Component {
     const types = [{ _id: "", name: "All Types" }, ...getTypes()];
     const x = await getNotes();
     console.log(x);
-    const localData = x;
+    let localData = x;
+    if (!localData.data.notes) {
+      localData = { data: { notes: [] } };
+    }
     const localNotes = localData.data.notes;
     this.setState({ notes: localNotes, types });
     localStorage.setItem("notes", JSON.stringify(this.state.notes));
