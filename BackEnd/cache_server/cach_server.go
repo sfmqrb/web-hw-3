@@ -4,16 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
-	"github.com/uptrace/bun/extra/bundebug"
-	"google.golang.org/grpc"
 	pb "hw3/BackEnd/cacheproto"
 	"log"
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
+	"github.com/uptrace/bun/extra/bundebug"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -210,13 +211,15 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 }
 func connectToDB() {
 	// Open a PostgreSQL database.
-	dsn := "postgres://postgres:admin@localhost:5432/postgres?sslmode=disable"
+	dsn := "postgres://postgres:test123@localhost:5432/postgres?sslmode=disable"
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	// Create a Bun db on top of it.
 	db = bun.NewDB(pgdb, pgdialect.New())
 	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
-	//userObj := &user{}
-	//err := db.NewSelect().Model(userObj).Where("user_name = ? AND password = ?", "amir", "Xamm2666").Scan(context.Context())
+	// userObj := &user{}
+	// err := db.NewSelect().Model(userObj).Where("user_name = ? AND password = ?", "sajad", "sajjad").Scan(context.WithTimeout(context.Background(), time.Second))
+	// fmt.Println(err)
+	
 }
 func main() {
 	connectToDB()

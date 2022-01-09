@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang-jwt/jwt"
 	"hw3/BackEnd/cache_client"
 	pb "hw3/BackEnd/cacheproto"
 	"io/ioutil"
@@ -11,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/golang-jwt/jwt"
 )
 
 const (
