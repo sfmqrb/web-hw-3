@@ -322,7 +322,7 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (int, string, string
 	case http.MethodPut:
 		requestType = Edit
 	case http.MethodGet:
-		if urlList[1] == "notes" {
+		if urlList[1] == "notes" && urlList[2] == "all" {
 			requestType = GetAll
 		} else {
 			requestType = Get

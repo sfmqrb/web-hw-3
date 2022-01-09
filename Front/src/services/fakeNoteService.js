@@ -29,7 +29,7 @@ function noteUrl(id) {
 // }
 
 export function getNotes() {
-  return http.get(apiEndpoint, getHeader());
+  return http.get(apiEndpoint + "/all", getHeader());
   // backend
   // return localStorage.getItem('notes');
 }
