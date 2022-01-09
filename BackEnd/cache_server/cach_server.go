@@ -75,6 +75,9 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 	ctx, _ := context.WithTimeout(context.Background(), time.Second)
 	var res *pb.CacheLoginResponse
 	res = &pb.CacheLoginResponse{}
+	//todo The cache
+	//check cache
+	//back to DB if not exist
 	switch in.RequestType {
 	case Login:
 		userObj := &user{}
@@ -88,6 +91,7 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 			var notes []note
 			err = db.NewSelect().Model(&notes).Where("author_id = ?", res.UserId).Scan(ctx)
 			res.Notes = toMyNote(notes)
+			res.UserName = in.Name
 		}
 	case signUp:
 		userObj := &user{}
@@ -113,6 +117,7 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 			}
 		}
 	}
+	//write to cache if not exist
 	err := a.Send(res)
 	if err != nil {
 		return err
@@ -222,7 +227,6 @@ func connectToDB() {
 func main() {
 	connectToDB()
 	startGrpcServer()
-
 }
 
 func startGrpcServer() {

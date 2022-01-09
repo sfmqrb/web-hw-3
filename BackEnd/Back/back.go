@@ -276,6 +276,7 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 		} else {
 			jwt := createJWT(20, cRes.UserId)
 			res.Jwt = jwt
+			res.Name = cRes.UserName
 			w.WriteHeader(http.StatusCreated)
 		}
 	}
