@@ -15,15 +15,16 @@ class RegisterForm extends Form {
     name: Joi.string().required().label("Name"),
   };
 
-  doSubmit = () => {
-    // doSubmit = async () => {
+  doSubmit = async () => {
     // backend
-    // const output = await userService.register(this.state.data);
-    // localStorage.setItem("jwt", output.jwt);
-    // localStorage.setItem("notes", output.notes);
-    // window.location = '/'; // navigate to homepage
+    console.log("register");
+    console.log(this.state.data);
+    const output = await userService.register(this.state.data);
+    console.log(output);
+    localStorage.setItem("jwt", output.jwt);
+    localStorage.setItem("notes", output.notes);
+    window.location = "/"; // navigate to homepage
     // above line in try catch 400 (bad request) to re-register
-
     console.log("Submitted");
   };
 

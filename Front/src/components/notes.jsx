@@ -28,6 +28,8 @@ class Notes extends Component {
     // backend use cached data to set state notes
     // modify getNotes() to return cached data
     // delete cached notes
+    console.log("delete notes from localStorage");
+    localStorage.removeItem("notes");
   }
 
   // backend only if getType() is working with backend

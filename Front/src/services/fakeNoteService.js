@@ -58,9 +58,16 @@ const notes = [
 ];
 
 export function getNotes() {
+  if (!localStorage.getItem("jwt")) {
+    console.log("first login or register");
+    window.location = "/login";
+    // this.props.history.push("/login");
+    // console.log()
+    return [];
+  }
   // if logged in ok else register or logged in
   // return {};
-  return notes;
+  return localStorage.getItem("notes");
 }
 
 export function getNote(id) {
