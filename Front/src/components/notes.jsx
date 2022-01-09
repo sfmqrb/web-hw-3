@@ -24,7 +24,9 @@ class Notes extends Component {
 
   componentDidMount() {
     const types = [{ _id: "", name: "All Types" }, ...getTypes()];
-    this.setState({ notes: getNotes(), types });
+    // console.log(getNotes());
+    const x = JSON.parse(getNotes());
+    this.setState({ notes: x, types });
     // backend use cached data to set state notes
     // modify getNotes() to return cached data
     // delete cached notes

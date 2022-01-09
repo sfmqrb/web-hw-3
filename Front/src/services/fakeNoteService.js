@@ -4,25 +4,26 @@ const notes = [
   {
     _id: "5b21ca3eeb7f6fbccd471815",
     title: "Terminator",
-    type: { _id: "Personal", name: "Personal" },
+    // type: { _id: "Personal", name: "Personal" },
     text: "lapsus (English) Origin & history From Latin lapsus. Pronunciation IPA: /ˈlæpsəs/ Noun lapsus (pl. lapsus) A slip, lapse, or error. Derived words & phrases lapsus… delapsum: delapsum (Latin) Participle dēlapsum Inflection of dēlapsus (nominative neuter singular) Inflection of dēlapsus (accusative masculine singular) Inflection of dēlapsus (accusative",
+    misscached: false,
   },
   {
     _id: "5b21ca3eeb7f6fbccd471816",
     title: "Die Hard",
-    type: { _id: "Personal", name: "Personal" },
+    // type: { _id: "Personal", name: "Personal" },
     text: "lapsus (English) Origin & history From Latin lapsus. Pronunciation IPA: /ˈlæpsəs/ Noun lapsus (pl. lapsus) A slip, lapse, or error. Derived words & phrases lapsus… delapsum: delapsum (Latin) Participle dēlapsum Inflection of dēlapsus (nominative neuter singular) Inflection of dēlapsus (accusative masculine singular) Inflection of dēlapsus (accusative",
   },
   {
     _id: "5b21ca3eeb7f6fbccd471817",
     title: "Get Out",
-    type: { _id: "Work", name: "Work" },
+    // type: { _id: "Work", name: "Work" },
     text: "lapsus (English) Origin & history From Latin lapsus. Pronunciation IPA: /ˈlæpsəs/ Noun lapsus (pl. lapsus) A slip, lapse, or error. Derived words & phrases lapsus… delapsum: delapsum (Latin) Participle dēlapsum Inflection of dēlapsus (nominative neuter singular) Inflection of dēlapsus (accusative masculine singular) Inflection of dēlapsus (accusative",
   },
   {
     _id: "5b21ca3eeb7f6fbccd471819",
     title: "Trip to Italy",
-    type: { _id: "Family", name: "Family" },
+    // type: { _id: "Family", name: "Family" },
     text: "lapsus (English) Origin & history From Latin lapsus. Pronunciation IPA: /ˈlæpsəs/ Noun lapsus (pl. lapsus) A slip, lapse, or error. Derived words & phrases lapsus… delapsum: delapsum (Latin) Participle dēlapsum Inflection of dēlapsus (nominative neuter singular) Inflection of dēlapsus (accusative masculine singular) Inflection of dēlapsus (accusative",
   },
   {
@@ -34,39 +35,40 @@ const notes = [
   {
     _id: "5b21ca3eeb7f6fbccd47181b",
     title: "Wedding Crashers",
-    type: { _id: "Family", name: "Family" },
+    // type: { _id: "Family", name: "Family" },
     text: "lapsus (English) Origin & history From Latin lapsus. Pronunciation IPA: /ˈlæpsəs/ Noun lapsus (pl. lapsus) A slip, lapse, or error. Derived words & phrases lapsus… delapsum: delapsum (Latin) Participle dēlapsum Inflection of dēlapsus (nominative neuter singular) Inflection of dēlapsus (accusative masculine singular) Inflection of dēlapsus (accusative",
   },
   {
     _id: "5b21ca3eeb7f6fbccd47181e",
     title: "Gone Girl",
-    type: { _id: "Work", name: "Work" },
+    // type: { _id: "Work", name: "Work" },
     text: "lapsus (English) Origin & history From Latin lapsus. Pronunciation IPA: /ˈlæpsəs/ Noun lapsus (pl. lapsus) A slip, lapse, or error. Derived words & phrases lapsus… delapsum: delapsum (Latin) Participle dēlapsum Inflection of dēlapsus (nominative neuter singular) Inflection of dēlapsus (accusative masculine singular) Inflection of dēlapsus (accusative",
   },
   {
     _id: "5b21ca3eeb7f6fbccd47181f",
     title: "The Sixth Sense",
-    type: { _id: "Work", name: "Work" },
+    // type: { _id: "Work", name: "Work" },
     text: "lapsus (English) Origin & history From Latin lapsus. Pronunciation IPA: /ˈlæpsəs/ Noun lapsus (pl. lapsus) A slip, lapse, or error. Derived words & phrases lapsus… delapsum: delapsum (Latin) Participle dēlapsum Inflection of dēlapsus (nominative neuter singular) Inflection of dēlapsus (accusative masculine singular) Inflection of dēlapsus (accusative",
   },
   {
     _id: "5b21ca3eeb7f6fbccd471821",
     title: "The Avengers",
-    type: { _id: "Personal", name: "Personal" },
+    // type: { _id: "Personal", name: "Personal" },
     text: "lapsus (English) Origin & history From Latin lapsus. Pronunciation IPA: /ˈlæpsəs/ Noun lapsus (pl. lapsus) A slip, lapse, or error. Derived words & phrases lapsus… delapsum: delapsum (Latin) Participle dēlapsum Inflection of dēlapsus (nominative neuter singular) Inflection of dēlapsus (accusative masculine singular) Inflection of dēlapsus (accusative",
   },
 ];
 
 export function getNotes() {
-  if (!localStorage.getItem("jwt")) {
-    console.log("first login or register");
-    window.location = "/login";
-    // this.props.history.push("/login");
-    // console.log()
-    return [];
-  }
+  // if (!localStorage.getItem("jwt")) {
+  //   console.log("first login or register");
+  //   window.location = "/login";
+  //   // this.props.history.push("/login");
+  //   // console.log()
+  //   return [];
+  // }
   // if logged in ok else register or logged in
   // return {};
+  localStorage.setItem("notes", JSON.stringify(notes));
   return localStorage.getItem("notes");
 }
 
