@@ -1,7 +1,8 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
 
-const NavBar = ({ user }) => {
+const NavBar = () => {
+  const user = localStorage.getItem("jwt");
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <Link className="navbar-brand" to="/">
@@ -37,7 +38,7 @@ const NavBar = ({ user }) => {
           {user && (
             <React.Fragment>
               <NavLink className="nav-item nav-link" to="/profile">
-                {user.name}
+                {localStorage.getItem("name") + "'s Profile"}
               </NavLink>
               <NavLink className="nav-item nav-link" to="/logout">
                 Logout
