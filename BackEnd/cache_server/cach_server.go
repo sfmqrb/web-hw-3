@@ -142,6 +142,7 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 			BaseModel: bun.BaseModel{},
 			Note:      in.Note,
 			AuthorId:  aId,
+			NoteTitle: in.NoteTitle,
 		}
 		_, err := db.NewInsert().Model(noteObj).Returning("*").Exec(ctx)
 		if err == nil {

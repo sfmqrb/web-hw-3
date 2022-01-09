@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang-jwt/jwt"
 	"hw3/BackEnd/cache_client"
 	pb "hw3/BackEnd/cacheproto"
 	"io/ioutil"
@@ -11,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/golang-jwt/jwt"
 )
 
 const (
@@ -130,7 +131,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization , jwt")
 	fmt.Println(r)
 	fmt.Println(r.Body)
 	if r.Method == http.MethodOptions {
@@ -163,6 +164,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	//extract front requestLogin
 	noteId, note, noteTitle, done := extractRequest(w, r)
+	fmt.Println("NoteId:", noteId)
 	if done {
 		return
 	}
@@ -301,6 +303,8 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (string, string, str
 		w.WriteHeader(http.StatusBadRequest)
 		return "", "", "", true
 	} else if len(urlList) == 3 {
+		fmt.Println(urlList)
+		fmt.Println(len(urlList))
 		noteId = urlList[2]
 		fmt.Println(noteId)
 	} else {
@@ -309,10 +313,12 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (string, string, str
 	}
 	var noteJson string
 	noteJson = getRequestBody(r)
+
+	fmt.Println("notJson "+ noteJson)
 	var noteObj requestNote
 	err := json.Unmarshal([]byte(noteJson), &noteObj)
 	if err != nil {
-		return "", "", "", false
+		return noteId, "", "", false
 	}
 	return noteId, noteObj.Text, noteObj.Title, false
 }
@@ -328,7 +334,7 @@ func handleNoteRequest(w http.ResponseWriter, r *http.Request, cRes *pb.CacheNot
 		if cRes.Access {
 			if cRes.Exist {
 				res.Text = cRes.Note
-				w.WriteHeader(http.StatusFound)
+				w.WriteHeader(http.StatusOK)
 			} else {
 				w.WriteHeader(http.StatusNoContent)
 			}

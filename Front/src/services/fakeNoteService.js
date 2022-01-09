@@ -7,6 +7,7 @@ function getHeader() {
   return {
     headers: {
       jwt: localStorage.getItem("jwt"),
+      // jwt: "X",
       "Content-Type": "application/json",
     },
   };
@@ -29,6 +30,8 @@ export function getNotes() {
 
 export function getNote(noteId) {
   console.log("in getNote");
+  console.log(getHeader());
+
   return http.get(noteUrl(noteId), getHeader());
 }
 
@@ -39,8 +42,6 @@ export function saveNote(note) {
     delete body._id;
     return http.put(noteUrl(note._id), body, getHeader());
   }
-
-  console.log(note);
   return http.post(apiEndpoint + "/new", note, getHeader());
 }
 
