@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import NotesTable from "./notesTable";
 import ListGroup from "./common/listGroup";
 import Pagination from "./common/pagination";
@@ -26,6 +27,14 @@ class Notes extends Component {
     this.setState({ notes: getNotes(), types });
   }
 
+  // backend only if getType() is working with backend
+  // async componentDidMount() {
+  //   const { data } = await getTypes();
+  //   const types = [{ _id: "", name: "All Types" }, ...data];
+  //   const { data: notes } = await getNotes();
+  //   this.setState({ notes, types });
+  // }
+
   handleDelete = (note) => {
     // locally delete
     const notes = this.state.notes.filter((m) => m._id !== note._id);
@@ -35,6 +44,21 @@ class Notes extends Component {
     let result = deleteNote(note._id);
     console.log(result);
   };
+
+  // handleDelete = async (note) => {
+  //   // locally delete
+  //   const originalNotes = this.state.notes;
+  //   const notes = originalNotes.filter((m) => m._id !== note._id);
+  //   this.setState({ notes });
+  //   // server delete
+  //   try {
+  //     await deleteNote(note._id);
+  //   } catch (ex) {
+  //     if (ex.response && ex.response.status === 404)
+  //       toast.error("This note has already been deleted.");
+  //     this.setState({ notes: originalNotes });
+  //   }
+  // };
 
   handlePageChange = (page) => {
     this.setState({ currentPage: page });
