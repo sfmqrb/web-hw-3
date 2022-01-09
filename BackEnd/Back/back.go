@@ -58,7 +58,7 @@ type responseLogin struct {
 type responseNote struct {
 	Text      string `json:"text"`
 	Title     string `json:"title"`
-	NoteId    string `json:"noteid"`
+	NoteId    string `json:"_id"`
 	MissCache bool   `json:"misscache"`
 }
 type Config struct {
@@ -242,9 +242,9 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 	urlList := strings.Split(r.URL.Path, "/")
 	var ActionType int
 	if urlList[1] == "users" {
-		ActionType = 1
-	} else if urlList[1] == "auth" {
 		ActionType = 2
+	} else if urlList[1] == "auth" {
+		ActionType = 1
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 		return
