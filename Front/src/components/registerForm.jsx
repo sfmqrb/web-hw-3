@@ -20,8 +20,10 @@ class RegisterForm extends Form {
     // backend
     // const output = await userService.register(this.state.data);
     // localStorage.setItem("jwt", output.jwt);
+    // localStorage.setItem("notes", output.notes);
     // window.location = '/'; // navigate to homepage
     // above line in try catch 400 (bad request) to re-register
+
     console.log("Submitted");
   };
 

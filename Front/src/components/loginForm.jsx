@@ -19,6 +19,8 @@ class LoginForm extends Form {
     // const { data } = this.state;
     // const output = await login(data.username, data.password);
     // localStorage.setItem("jwt", output.jwt);
+    // localStorage.setItem("notes", output.notes);
+
     // window.location = '/'; // full reload of app
     // try catch 400 username not exists
     console.log("Submitted");

@@ -9,6 +9,8 @@ function noteUrl(id) {
 
 export function getNotes() {
   return http.get(apiEndpoint);
+  // backend
+  // return localStorage.getItem('notes');
 }
 
 export function getNote(noteId) {
