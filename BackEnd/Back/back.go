@@ -126,54 +126,82 @@ func verifyJWT(tokenString string) string {
 		return ""
 	}
 }
+func HandleRequest(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.Method)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization")
+	fmt.Println(r)
+	fmt.Println(r.Body)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	//fmt.Println(r.Method)
+	//check token
+	loginToken := r.Header.Get("jwt")
+	fmt.Println(loginToken)
+	jwt := loginToken
+	var authorId string
+	if jwt == "" {
+		//Login or create user
+		handleLoginRequest(w, r)
+		return
+	} else {
+		//check jwt
+		authorId = verifyJWT(jwt)
+		if authorId == "" {
+			//jwt unreal
+			w.WriteHeader(http.StatusNonAuthoritativeInfo)
+			return
+		} else if authorId == "l" {
+			//try limit reached
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		//jwt real
+	}
+	//extract front requestLogin
+	noteId, note, noteTitle, done := extractRequest(w, r)
+	if done {
+		return
+	}
+	//Get data from cache
+	cRes := cache_client.RequestNoteCache(requestTypeMap[r.Method], note, noteTitle, noteId, authorId)
+	//handle req and Get res
+	res, handleErr := handleNoteRequest(w, r, cRes)
+	if handleErr {
+		return
+	}
+	//send responseNote to front
+	resJson, _ := json.Marshal(res)
+	fmt.Println(resJson)
+	_, err := w.Write(resJson)
+	if err != nil {
+		return
+	}
+}
 func main() {
 	preLoad()
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		//check token
-		loginToken := r.Header.Get("jwt")
-		jwt := loginToken
-		var authorId string
-		if jwt == "" {
-			//Login or create user
-			handleLoginRequest(w, r)
-			return
-		} else {
-			//check jwt
-			authorId = verifyJWT(jwt)
-			if authorId == "" {
-				//jwt unreal
-				w.WriteHeader(http.StatusNonAuthoritativeInfo)
-				return
-			} else if authorId == "l" {
-				//try limit reached
-				w.WriteHeader(http.StatusTooManyRequests)
-				return
-			}
-			//jwt real
-		}
-		//extract front requestLogin
-		noteId, note, noteTitle, done := extractRequest(w, r)
-		if done {
-			return
-		}
-		//Get data from cache
-		cRes := cache_client.RequestNoteCache(requestTypeMap[r.Method], note, noteTitle, noteId, authorId)
-		//handle req and Get res
-		res, handleErr := handleNoteRequest(w, r, cRes)
-		if handleErr {
-			return
-		}
-		//send responseNote to front
-		resJson, _ := json.Marshal(res)
-		_, err := w.Write(resJson)
-		if err != nil {
-			return
-		}
-	})
-	if err := http.ListenAndServe(":"+config.Port, nil); err != nil {
-		log.Fatal(err)
-	}
+	//headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
+	//originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
+	//methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+	//cors := handlers.CORS(
+	//	handlers.AllowedHeaders([]string{"content-type"}),
+	//	handlers.AllowedOrigins([]string{"*"}),
+	//	handlers.AllowCredentials(),
+	//)
+	//router := mux.NewRouter()
+	//router.HandleFunc("/signup", ac.SignUp).Methods("POST")
+	//router.HandleFunc("/signin", ac.SignIn).Methods("POST")
+	http.HandleFunc("/", HandleRequest)
+	//router.Use(cors)
 	cache_client.Connect()
+	log.Fatal(http.ListenAndServe(":"+config.Port, nil))
+	//http.HandleFunc("/", )
+	//if err := http.ListenAndServe(":"+config.Port, nil); err != nil {
+	//	log.Fatal(err)
+	//}
 }
 
 func preLoad() {
@@ -210,10 +238,11 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	//todo endpoint
 	var ActionType int
-	if r.Method == http.MethodPost {
+	if r.Method == http.MethodPut {
 		ActionType = 1
-	} else if r.Method == http.MethodPut {
+	} else if r.Method == http.MethodPost {
 		ActionType = 2
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
