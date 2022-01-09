@@ -1,6 +1,7 @@
 import React from "react";
 import Joi from "joi-browser";
 import Form from "./common/form";
+import * as userService from "../services/userService";
 
 class RegisterForm extends Form {
   state = {
@@ -15,7 +16,12 @@ class RegisterForm extends Form {
   };
 
   doSubmit = () => {
-    // Call the server
+    // doSubmit = async () => {
+    // backend
+    // const output = await userService.register(this.state.data);
+    // localStorage.setItem("jwt", output.jwt);
+    // window.location = '/'; // navigate to homepage
+    // above line in try catch 400 (bad request) to re-register
     console.log("Submitted");
   };
 
