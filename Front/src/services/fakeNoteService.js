@@ -17,15 +17,21 @@ function noteUrl(id) {
   return `${apiEndpoint}/${id}`;
 }
 
+// export function getNotes() {
+//   if (!localStorage.getItem("jwt")) {
+//     console.log("first login or register");
+//     window.location = "/login";
+//     return [];
+//   }
+//   const localNotes = localStorage.getItem("notes");
+//   if (localNotes === null) return JSON.stringify([]);
+//   return localNotes;
+// }
+
 export function getNotes() {
-  if (!localStorage.getItem("jwt")) {
-    console.log("first login or register");
-    window.location = "/login";
-    return [];
-  }
-  const localNotes = localStorage.getItem("notes");
-  if (localNotes === null) return JSON.stringify([]);
-  return localNotes;
+  return http.get(apiEndpoint, getHeader());
+  // backend
+  // return localStorage.getItem('notes');
 }
 
 export function getNote(noteId) {
