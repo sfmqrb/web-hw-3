@@ -1,2 +1,4 @@
 node_modules
 .DS_Store
+BackEnd/cache_server/cach_server.go
+.gitignore
