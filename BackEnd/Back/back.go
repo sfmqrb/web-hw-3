@@ -239,13 +239,14 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//todo endpoint
+	urlList := strings.Split(r.URL.Path, "/")
 	var ActionType int
-	if r.Method == http.MethodPut {
+	if urlList[1] == "users" {
 		ActionType = 1
-	} else if r.Method == http.MethodPost {
+	} else if urlList[1] == "auth" {
 		ActionType = 2
 	} else {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -295,8 +296,6 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (string, string, str
 	//}
 	var noteId string
 	urlList := strings.Split(r.URL.Path, "/")
-	fmt.Println(urlList)
-	fmt.Println(len(urlList))
 	if len(urlList) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return "", "", "", true

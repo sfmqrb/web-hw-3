@@ -31,7 +31,7 @@ type user struct {
 	bun.BaseModel `bun:"table:users,alias:u"`
 	UserId        int    `bun:"user_id,pk,autoincrement"`
 	UserName      string `bun:"user_name,notnull"`
-	name          string `bun:"name,notnull"`
+	Name          string `bun:"name,notnull"`
 	Password      string `bun:"password,notnull"`
 }
 
@@ -99,6 +99,7 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 				BaseModel: bun.BaseModel{},
 				UserName:  in.User,
 				Password:  in.Pass,
+				Name:      in.Name,
 			}
 			exec, err := db.NewInsert().Model(userObj).Exec(ctx)
 			if err != nil {
