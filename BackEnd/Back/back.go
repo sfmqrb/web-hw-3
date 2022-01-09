@@ -335,7 +335,7 @@ func handleNoteRequest(w http.ResponseWriter, r *http.Request, cRes *pb.CacheNot
 		if cRes.Access {
 			if cRes.Exist {
 				res.Text = cRes.Note
-
+				res.Title = cRes.Title
 				res.NoteId = cRes.NoteId
 				w.WriteHeader(http.StatusOK)
 			} else {

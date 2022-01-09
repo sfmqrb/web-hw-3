@@ -44,13 +44,13 @@ class Notes extends Component {
   //   this.setState({ notes, types });
   // }
 
-  handleDelete = (note) => {
+  handleDelete = async (note) => {
     // locally delete
     const notes = this.state.notes.filter((m) => m._id !== note._id);
     this.setState({ notes });
     // server delete
     console.log(note);
-    let result = deleteNote(note._id);
+    let result = await deleteNote(note._id);
     console.log(result);
   };
 

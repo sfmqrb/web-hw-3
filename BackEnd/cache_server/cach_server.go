@@ -182,6 +182,7 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 			res = &pb.CacheNoteResponse{
 				Note:      noteObj.Note,
 				NoteId:    strconv.Itoa(noteObj.NoteId),
+				Title:     noteObj.NoteTitle,
 				Exist:     true,
 				Access:    in.AuthorId == strconv.Itoa(noteObj.AuthorId) || strconv.Itoa(noteObj.AuthorId) == "0",
 				MissCache: false,

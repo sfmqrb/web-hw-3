@@ -35,42 +35,28 @@ class NoteForm extends Form {
     // backend
     try {
       const note = await getNote(noteId);
-
-      console.log("get note main function try", note);
       const localData = this.mapToViewModel(note);
       this.setState({ data: localData });
     } catch (ex) {
-      console.log("get note main function catch");
       if (ex.response && ex.response.status === 404)
         return this.props.history.replace("/not-found");
     }
   }
 
   mapToViewModel(note) {
-    console.log("mapToViewModel", note);
-    console.log(note.data);
-    console.log(note.data.title || "title");
-
     return {
       title: note.data.title || "TITLE",
       typeId: "Others",
       text: note.data.text || "TEXT",
-      _id: Number(note.data._id) || -1,
-
-      // _id: 1,
-      // title: "title",
-      // typeId: "Others",
-      // text: "text",
+      _id: note.data._id || "-1",
     };
   }
 
-  doSubmit = () => {
-    saveNote(this.state.data);
+  doSubmit = async () => {
     // backend
-    // await saveNote(this.state.data);
-
-    this.props.history.push("/notes");
-    // backend
+    // console.log(this.props)
+    await saveNote(this.state.data);
+    window.location = "/notes";
   };
 
   render() {
