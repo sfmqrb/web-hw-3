@@ -15,18 +15,6 @@ import "./App.css";
 class App extends Component {
   state = {};
 
-  // backend related
-  // componentDidMount() {
-  // try{
-  //   const jwt = localStorage.getItem("jwt");
-  //   const user = jwtDecode(jwt)
-  //   this.setState({ user });
-  // }
-  // catch(e){
-  // navigate to login page
-  // }
-  // }
-
   render() {
     return (
       <React.Fragment>
