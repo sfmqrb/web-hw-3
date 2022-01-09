@@ -23,28 +23,23 @@ class NoteForm extends Form {
   };
 
   // async //backend
-  componentDidMount() {
+  async componentDidMount() {
     const types = getTypes();
-    // backend
-    // const types = await getTypes();
     this.setState({ types });
 
     const noteId = this.props.match.params.id;
     if (noteId === "new") return;
 
-    const note = getNote(noteId);
-    if (!note) return this.props.history.replace("/not-found");
+    // client
+    // const note = getNote(noteId);
     // backend
-    // const note = await getNote(noteId);
-    // try {
-    //      const note = await getNote(noteId);
-    //      this.setState({ data: this.mapToViewModel(note) });
-    // }
-    // catch (ex) {
-    //      if (ex.response && ex.response.status === 404)
-    //           return this.props.history.replace("/not-found");
-    // }
-    this.setState({ data: this.mapToViewModel(note) });
+    try {
+      const note = await getNote(noteId);
+      this.setState({ data: this.mapToViewModel(note) });
+    } catch (ex) {
+      if (ex.response && ex.response.status === 404)
+        return this.props.history.replace("/not-found");
+    }
   }
 
   mapToViewModel(note) {
