@@ -23,12 +23,13 @@ class Notes extends Component {
     sortColumn: { path: "title", order: "asc" },
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     const types = [{ _id: "", name: "All Types" }, ...getTypes()];
-    const x = getNotes();
-    // console.log(x[0])
-    // console.log(JSON.parse(getNotes()))
-    this.setState({ notes: JSON.parse(x), types });
+    const x = await getNotes();
+    const localData = JSON.parse(x);
+    const localNotes = localData.data.notes;
+    this.setState({ notes: localNotes, types });
+    localStorage.setItem("notes", JSON.stringify(this.state.notes));
     // backend use cached data to set state notes
     // modify getNotes() to return cached data
     // delete cached notes
