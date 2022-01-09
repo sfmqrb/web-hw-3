@@ -35,9 +35,13 @@ class NoteForm extends Form {
     // backend
     try {
       const note = await getNote(noteId);
+      console.log("note", note);
       const localData = this.mapToViewModel(note);
+      console.log("local", localData);
       this.setState({ data: localData });
+      console.log("state", this.state);
     } catch (ex) {
+      console.log("error", ex);
       if (ex.response && ex.response.status === 404)
         return this.props.history.replace("/not-found");
     }

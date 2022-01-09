@@ -26,7 +26,8 @@ class Notes extends Component {
   async componentDidMount() {
     const types = [{ _id: "", name: "All Types" }, ...getTypes()];
     const x = await getNotes();
-    const localData = JSON.parse(x);
+    console.log(x);
+    const localData = x;
     const localNotes = localData.data.notes;
     this.setState({ notes: localNotes, types });
     localStorage.setItem("notes", JSON.stringify(this.state.notes));
