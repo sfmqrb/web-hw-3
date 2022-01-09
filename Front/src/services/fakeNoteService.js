@@ -29,7 +29,7 @@ export function getNotes() {
 
 export function getNote(noteId) {
   console.log("in getNote");
-  return http.get(noteUrl(noteId), (config = getHeader()));
+  return http.get(noteUrl(noteId), getHeader());
 }
 
 export function saveNote(note) {
@@ -37,11 +37,11 @@ export function saveNote(note) {
   if (note._id) {
     const body = { ...note };
     delete body._id;
-    return http.put(noteUrl(note._id), (data = body), (config = getHeader()));
+    return http.put(noteUrl(note._id), body, getHeader());
   }
 
   console.log(note);
-  return http.post(apiEndpoint + "/new", (data = note), (config = getHeader()));
+  return http.post(apiEndpoint + "/new", note, getHeader());
 }
 
 export function deleteNote(id) {
@@ -50,5 +50,5 @@ export function deleteNote(id) {
   let noteInDb = notes.find((m) => m._id === id);
   notes.splice(notes.indexOf(noteInDb), 1);
   // backend
-  return http.delete(noteUrl(id), (config = getHeader()));
+  return http.delete(noteUrl(id), getHeader());
 }

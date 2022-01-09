@@ -23,7 +23,7 @@ class NoteForm extends Form {
   };
 
   // async //backend
-  componentDidMount() {
+  async componentDidMount() {
     const types = getTypes();
     this.setState({ types });
 
@@ -40,8 +40,6 @@ class NoteForm extends Form {
       if (ex.response && ex.response.status === 404)
         return this.props.history.replace("/not-found");
     }
-
-    this.setState({ data: this.mapToViewModel(note) });
   }
 
   mapToViewModel(note) {
