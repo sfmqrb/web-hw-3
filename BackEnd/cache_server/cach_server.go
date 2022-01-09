@@ -90,7 +90,8 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 			var notes []note
 			err = db.NewSelect().Model(&notes).Where("author_id = ?", res.UserId).Scan(ctx)
 			res.Notes = toMyNote(notes)
-			res.UserName = in.Name
+			res.UserName = in.User
+			res.Name = in.Name
 		}
 	case signUp:
 		userObj := &user{}
@@ -141,6 +142,7 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 			BaseModel: bun.BaseModel{},
 			Note:      in.Note,
 			AuthorId:  aId,
+			NoteTitle: in.NoteTitle,
 		}
 		_, err := db.NewInsert().Model(noteObj).Returning("*").Exec(ctx)
 		if err == nil {

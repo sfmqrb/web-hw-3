@@ -130,7 +130,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Method)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization")
+	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization, jwt")
 	fmt.Println(r)
 	fmt.Println(r.Body)
 	if r.Method == http.MethodOptions {
@@ -266,6 +266,7 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 				jwt := createJWT(20, cRes.UserId)
 				res.Jwt = jwt
 				res.Notes = toMyNote(cRes.Notes)
+				res.Name = cRes.Name
 			}
 		} else {
 			w.WriteHeader(http.StatusNotAcceptable)
@@ -312,7 +313,7 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (string, string, str
 	var noteObj requestNote
 	err := json.Unmarshal([]byte(noteJson), &noteObj)
 	if err != nil {
-		return "", "", "", false
+		return noteId, "", "", false
 	}
 	return noteId, noteObj.Text, noteObj.Title, false
 }
@@ -328,6 +329,7 @@ func handleNoteRequest(w http.ResponseWriter, r *http.Request, cRes *pb.CacheNot
 		if cRes.Access {
 			if cRes.Exist {
 				res.Text = cRes.Note
+				res.NoteId = cRes.NoteId
 				w.WriteHeader(http.StatusFound)
 			} else {
 				w.WriteHeader(http.StatusNoContent)
