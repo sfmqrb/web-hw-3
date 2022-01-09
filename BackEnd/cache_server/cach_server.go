@@ -19,10 +19,11 @@ import (
 
 const (
 	// action types of cache note request
-	save = 1
-	del  = 2
-	get  = 3
-	edit = 4
+	save   = 1
+	del    = 2
+	get    = 3
+	getAll = 5
+	edit   = 4
 	// action types of cache login request
 	Login  = 1
 	signUp = 2
@@ -125,9 +126,10 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 	}
 	return nil
 }
-func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNoteRequest) (*pb.CacheNoteResponse, error) {
+func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.CacheManagement_CacheNoteRPCServer) error {
 	//log.Printf("Received: %v", in.GetName())
 	log.Printf("Recived Cache Request: %v , %v , %d , %v ", in.Note, in.NoteId, in.RequestType, in.AuthorId)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second)
 	var res *pb.CacheNoteResponse
 	res = &pb.CacheNoteResponse{
 		Note:      "",
@@ -170,7 +172,17 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 			print(err)
 			res.Exist = false
 			res.Access = false
-
+		}
+	case getAll:
+		var notes []note
+		err := db.NewSelect().Model(&notes).Where("author_id = ?", in.AuthorId).Scan(ctx)
+		if err != nil {
+			fmt.Println(err)
+			res.Exist = false
+		} else {
+			res.Notes = toMyNote(notes)
+			res.Exist = true
+			res.Access = true
 		}
 	case get:
 		noteObj := new(note)
@@ -215,11 +227,15 @@ func (s *CacheManagementServer) CacheNoteRPC(ctx context.Context, in *pb.CacheNo
 	}
 	//var user_id int32 = int32(rand.Intn(100))
 	//todo handle request
-	return res, nil
+	err := a.Send(res)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 func connectToDB() {
 	// Open a PostgreSQL database.
-	dsn := "postgres://postgres:test123@localhost:5432/postgres?sslmode=disable"
+	dsn := "postgres://postgres:admin@localhost:5432/postgres?sslmode=disable"
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	// Create a Bun db on top of it.
 	db = bun.NewDB(pgdb, pgdialect.New())

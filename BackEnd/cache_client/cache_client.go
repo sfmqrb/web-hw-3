@@ -54,17 +54,25 @@ func Connect() {
 	Ctx, _ = context.WithTimeout(context.Background(), time.Minute)
 }
 func RequestNoteCache(requestType int, note string, noteTitle string, noteId string, authorId string) *pb.CacheNoteResponse {
-	cacheNoteResponse, err := C.CacheNoteRPC(Ctx, &pb.CacheNoteRequest{
+	loginReq := &pb.CacheNoteRequest{
 		RequestType: int32(requestType),
 		NoteId:      noteId,
 		AuthorId:    authorId,
 		Note:        note,
 		NoteTitle:   noteTitle,
-	})
+	}
+	cacheNoteResponse, err := C.CacheNoteRPC(Ctx, loginReq)
 	if err != nil {
 		return nil
 	}
-	return cacheNoteResponse
+	if err != nil {
+		return nil
+	}
+	recv, err := cacheNoteResponse.Recv()
+	if err != nil {
+		return nil
+	}
+	return recv
 }
 func RequestLoginCache(requestType int, userName string, name string, pass string) *pb.CacheLoginResponse {
 	Ctx, _ = context.WithTimeout(context.Background(), time.Minute)

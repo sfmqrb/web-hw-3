@@ -6,7 +6,7 @@ package usermgmt;
 option go_package = "hw3/BackEnd;go_cache_grpc";
 
 service CacheManagement {
-  rpc CacheNoteRPC (CacheNoteRequest) returns (CacheNoteResponse) {}
+  rpc CacheNoteRPC (CacheNoteRequest) returns (stream CacheNoteResponse) {}
   rpc CacheLoginRPC (CacheLoginRequest) returns (stream CacheLoginResponse) {}
 }
 //service RequestCache{
@@ -24,11 +24,13 @@ message CacheNoteRequest{
   string noteTitle = 3;
   string authorId = 4;
   string note = 5;
+
 }
 message CacheNoteResponse{
   string note = 1;
   string title = 6;
   string noteId = 2;
+  repeated Note notes = 7;
   bool exist = 3;
   bool access = 4;
   bool missCache = 5;

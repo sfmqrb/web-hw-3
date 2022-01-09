@@ -16,10 +16,11 @@ import (
 
 const (
 	// action types of cache text requestLogin
-	Save = 1
-	Del  = 2
-	Get  = 3
-	Edit = 4
+	Save   = 1
+	Del    = 2
+	Get    = 3
+	Edit   = 4
+	GetAll = 5
 	// action types of cache Login requestLogin
 	Login  = 1
 	signUp = 2
@@ -57,10 +58,11 @@ type responseLogin struct {
 }
 
 type responseNote struct {
-	Text      string `json:"text"`
-	Title     string `json:"title"`
-	NoteId    string `json:"_id"`
-	MissCache bool   `json:"misscache"`
+	Text      string         `json:"text"`
+	Title     string         `json:"title"`
+	NoteId    string         `json:"_id"`
+	Notes     []responseNote `json:"notes"`
+	MissCache bool           `json:"misscache"`
 }
 type Config struct {
 	Port           string `json:"port"`
@@ -163,15 +165,15 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 		//jwt real
 	}
 	//extract front requestLogin
-	noteId, note, noteTitle, done := extractRequest(w, r)
+	requestType, noteId, note, noteTitle, done := extractRequest(w, r)
 	fmt.Println("NoteId:", noteId)
 	if done {
 		return
 	}
 	//Get data from cache
-	cRes := cache_client.RequestNoteCache(requestTypeMap[r.Method], note, noteTitle, noteId, authorId)
+	cRes := cache_client.RequestNoteCache(requestType, note, noteTitle, noteId, authorId)
 	//handle req and Get res
-	res, handleErr := handleNoteRequest(w, r, cRes)
+	res, handleErr := handleNoteRequest(requestType, w, r, cRes)
 	if handleErr {
 		return
 	}
@@ -293,43 +295,61 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func extractRequest(w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
+func extractRequest(w http.ResponseWriter, r *http.Request) (int, string, string, string, bool) {
 	//if r.URL.Path != "/" {
 	//	http.NotFound(w, r)
 	//	return "", "", "", true
 	//}
+	var requestType int
 	var noteId string
 	urlList := strings.Split(r.URL.Path, "/")
 	if len(urlList) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		return "", "", "", true
+		return requestType, "", "", "", true
 	} else if len(urlList) == 3 {
 		fmt.Println(urlList)
 		fmt.Println(len(urlList))
 		noteId = urlList[2]
 		fmt.Println(noteId)
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
-		return "", "", "", true
+	}
+	//} else if len(urlList) == 2 {
+	//
+	//} else {
+	//	w.WriteHeader(http.StatusBadRequest)
+	//	return requestType,"", "", "", true
+	//}
+	switch r.Method {
+	case http.MethodPut:
+		requestType = Edit
+	case http.MethodGet:
+		if urlList[1] == "notes" {
+			requestType = GetAll
+		} else {
+			requestType = Get
+		}
+	case http.MethodPost:
+		requestType = Save
+	case http.MethodDelete:
+		requestType = Del
 	}
 	var noteJson string
 	noteJson = getRequestBody(r)
 
-	fmt.Println("notJson "+ noteJson)
+	fmt.Println("notJson " + noteJson)
 	var noteObj requestNote
 	err := json.Unmarshal([]byte(noteJson), &noteObj)
 	if err != nil {
-		return noteId, "", "", false
+		return requestType, noteId, "", "", false
 	}
-	return noteId, noteObj.Text, noteObj.Title, false
+	return requestType, noteId, noteObj.Text, noteObj.Title, false
 }
 
-func handleNoteRequest(w http.ResponseWriter, r *http.Request, cRes *pb.CacheNoteResponse) (responseNote, bool) {
+func handleNoteRequest(actionType int, w http.ResponseWriter, r *http.Request, cRes *pb.CacheNoteResponse) (responseNote, bool) {
 	var res responseNote
 	fmt.Println(cRes.Access)
 	fmt.Println(cRes.Exist)
-	switch r.Method {
-	case http.MethodGet:
+	switch actionType {
+	case Get:
 		// Get the text.
 		res.MissCache = cRes.MissCache
 		if cRes.Access {
@@ -344,11 +364,24 @@ func handleNoteRequest(w http.ResponseWriter, r *http.Request, cRes *pb.CacheNot
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
 		}
-	case http.MethodPost:
+	case GetAll:
+		// Get all texts.
+		res.MissCache = cRes.MissCache
+		if cRes.Access {
+			if cRes.Exist {
+				res.Notes = toMyNote(cRes.Notes)
+				w.WriteHeader(http.StatusOK)
+			} else {
+				w.WriteHeader(http.StatusNoContent)
+			}
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+	case Save:
 		// Create a new text.
 		w.WriteHeader(http.StatusAccepted)
 		res.NoteId = cRes.NoteId
-	case http.MethodPut:
+	case Edit:
 		// Update an existing text.
 		if cRes.Access {
 			if cRes.Exist {
@@ -359,9 +392,8 @@ func handleNoteRequest(w http.ResponseWriter, r *http.Request, cRes *pb.CacheNot
 		} else {
 			w.WriteHeader(http.StatusUnauthorized)
 		}
-	case http.MethodDelete:
+	case Del:
 		// Remove the text.
-
 		if cRes.Exist {
 			if cRes.Access {
 				w.WriteHeader(http.StatusAccepted)
