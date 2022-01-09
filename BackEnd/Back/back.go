@@ -61,12 +61,16 @@ type responseNote struct {
 	NoteId    string `json:"noteid"`
 	MissCache bool   `json:"misscache"`
 }
+type Config struct {
+	Port           string `json:"port"`
+	SessionLimit   int    `json:"sessionLimit"`
+	MinuteTryLimit int    `json:"minuteTryLimit"`
+}
 
-//todo config file
+var config Config
 var jwtTries map[string]int = map[string]int{}
 var jwtTime = map[string]time.Time{}
 
-var minuteTryLimit int = 10
 var hmacSampleSecret = []byte("my_secret_key")
 
 func toMyNote(notes []*pb.Note) []responseNote {
@@ -110,7 +114,7 @@ func verifyJWT(tokenString string) string {
 		return hmacSampleSecret, nil
 	})
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if jwtTries[tokenString] <= minuteTryLimit {
+		if jwtTries[tokenString] <= config.MinuteTryLimit {
 			jwtTries[tokenString] += 1
 			return claims["authorId"].(string)
 		} else {
@@ -166,18 +170,25 @@ func main() {
 			return
 		}
 	})
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":"+config.Port, nil); err != nil {
 		log.Fatal(err)
 	}
 	cache_client.Connect()
 }
 
 func preLoad() {
-	ticker := time.NewTicker(time.Minute * time.Duration(20))
+	file, _ := ioutil.ReadFile("Back/config.json")
+	err := json.Unmarshal(file, &config)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	cache_client.Connect()
+	ticker := time.NewTicker(time.Minute * time.Duration(config.SessionLimit))
 	go func(ticker *time.Ticker) {
 		for range ticker.C {
 			for ts, t := range jwtTime {
-				if time.Now().Add(time.Minute*time.Duration(20*2)).Unix() < t.Unix() {
+				if time.Now().Add(time.Minute*time.Duration(config.SessionLimit*2)).Unix() < t.Unix() {
 					//jwt is expired
 					delete(jwtTime, ts)
 					delete(jwtTries, ts)
@@ -185,9 +196,6 @@ func preLoad() {
 			}
 		}
 	}(ticker)
-	cache_client.Connect()
-	r := cache_client.RequestLoginCache(Login, "amir", "", "Xamm2666")
-	fmt.Println(r.Notes)
 	//loginRes := requestLoginCache(signUp, "amir123", "Xamir266")
 	//fmt.Println(loginRes.Exist)
 	//fmt.Println(loginRes.WrongPass)
@@ -224,7 +232,7 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusUnauthorized)
 			} else {
 				w.WriteHeader(http.StatusAccepted)
-				//todo config session length
+				//todo Config session length
 				jwt := createJWT(20, cRes.UserId)
 				res.Jwt = jwt
 				res.Notes = toMyNote(cRes.Notes)
