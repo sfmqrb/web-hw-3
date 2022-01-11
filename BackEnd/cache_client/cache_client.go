@@ -12,7 +12,6 @@ var conn grpc.ClientConnInterface
 var err error
 
 var C pb.CacheManagementClient
-var Ctx context.Context
 var cancel context.CancelFunc
 
 type CacheNoteResponse struct {
@@ -51,9 +50,8 @@ func Connect() {
 	}
 	C = pb.NewCacheManagementClient(conn)
 	//todo
-	Ctx, _ = context.WithTimeout(context.Background(), time.Minute)
 }
-func RequestNoteCache(requestType int, note string, noteTitle string, noteId string, authorId string) *pb.CacheNoteResponse {
+func RequestNoteCache(requestType int, note string, noteTitle string, noteId string, authorId string) (*pb.CacheNoteResponse, error) {
 	loginReq := &pb.CacheNoteRequest{
 		RequestType: int32(requestType),
 		NoteId:      noteId,
@@ -61,21 +59,24 @@ func RequestNoteCache(requestType int, note string, noteTitle string, noteId str
 		Note:        note,
 		NoteTitle:   noteTitle,
 	}
+	Ctx, _ := context.WithTimeout(context.Background(), 10*time.Minute)
 	cacheNoteResponse, err := C.CacheNoteRPC(Ctx, loginReq)
 	if err != nil {
-		return nil
+		print(err)
+		return nil, err
 	}
 	if err != nil {
-		return nil
+		print(err)
+		return nil, err
 	}
 	recv, err := cacheNoteResponse.Recv()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return recv
+	return recv, nil
 }
 func RequestLoginCache(requestType int, userName string, name string, pass string) *pb.CacheLoginResponse {
-	Ctx, _ = context.WithTimeout(context.Background(), time.Minute)
+	Ctx, _ := context.WithTimeout(context.Background(), 10*time.Minute)
 	loginReq := &pb.CacheLoginRequest{
 		RequestType: int32(requestType),
 		User:        userName,

@@ -73,7 +73,7 @@ func toMyNote(notes []note) []*pb.Note {
 }
 func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.CacheManagement_CacheLoginRPCServer) error {
 	//todo handle request
-	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Minute)
 	var res *pb.CacheLoginResponse
 	res = &pb.CacheLoginResponse{}
 	//todo The cache
@@ -92,8 +92,8 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 			var notes []note
 			err = db.NewSelect().Model(&notes).Where("author_id = ?", res.UserId).Scan(ctx)
 			res.Notes = toMyNote(notes)
-			res.UserName = in.User
-			res.Name = in.Name
+			res.UserName = userObj.UserName
+			res.Name = userObj.Name
 		}
 	case signUp:
 		userObj := &user{}
@@ -108,14 +108,16 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 				Password:  in.Pass,
 				Name:      in.Name,
 			}
-			exec, err := db.NewInsert().Model(userObj).Exec(ctx)
-			if err != nil {
-				id, err := exec.LastInsertId()
-				if err != nil {
-					fmt.Println(err)
-					return err
-				}
-				res.UserId = strconv.FormatInt(id, 10)
+			_, err := db.NewInsert().Model(userObj).Exec(ctx)
+			if err == nil {
+				//id, err := exec.LastInsertId()
+				//if err != nil {
+				//	fmt.Println(err)
+				//	return err
+				//}
+				res.UserId = strconv.FormatInt(int64(userObj.UserId), 10)
+				res.Name = userObj.Name
+				res.UserName = userObj.UserName
 			}
 		}
 	}
@@ -129,7 +131,7 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.CacheManagement_CacheNoteRPCServer) error {
 	//log.Printf("Received: %v", in.GetName())
 	log.Printf("Recived Cache Request: %v , %v , %d , %v ", in.Note, in.NoteId, in.RequestType, in.AuthorId)
-	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), time.Minute)
 	var res *pb.CacheNoteResponse
 	res = &pb.CacheNoteResponse{
 		Note:      "",
@@ -235,7 +237,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 }
 func connectToDB() {
 	// Open a PostgreSQL database.
-	dsn := "postgres://postgres:test123@localhost:5432/postgres?sslmode=disable"
+	dsn := "postgres://postgres:admin@localhost:5432/postgres?sslmode=disable"
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	// Create a Bun db on top of it.
 	db = bun.NewDB(pgdb, pgdialect.New())

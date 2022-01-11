@@ -1,5 +1,5 @@
 {
   "port": "8080",
   "sessionLimit": 20,
-  "minuteTryLimit" : 10
+  "minuteTryLimit" : 30
 }

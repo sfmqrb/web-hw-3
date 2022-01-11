@@ -104,7 +104,6 @@ func createJWT(sessionLength int, authorId string) string {
 	go func(ts string, ticker *time.Ticker) {
 		for range ticker.C {
 			jwtTries[ts] = 0
-			fmt.Println("token tick " + ts)
 		}
 	}(tokenString, ticker)
 	return tokenString
@@ -130,12 +129,14 @@ func verifyJWT(tokenString string) string {
 	}
 }
 func HandleRequest(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("new req")
 	fmt.Println(r.Method)
+	//fmt.Println(r.Method)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization, jwt")
-	fmt.Println(r)
-	fmt.Println(r.Body)
+	//fmt.Println(r)
+	//fmt.Println(r.Body)
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -143,7 +144,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println(r.Method)
 	//check token
 	loginToken := r.Header.Get("jwt")
-	fmt.Println(loginToken)
+	//fmt.Println(loginToken)
 	jwt := loginToken
 	var authorId string
 	if jwt == "" {
@@ -166,20 +167,26 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	//extract front requestLogin
 	requestType, noteId, note, noteTitle, done := extractRequest(w, r)
-	fmt.Println("NoteId:", noteId)
+	//fmt.Println("NoteId:", noteId)
 	if done {
 		return
 	}
 	//Get data from cache
-	cRes := cache_client.RequestNoteCache(requestType, note, noteTitle, noteId, authorId)
+	cRes, e := cache_client.RequestNoteCache(requestType, note, noteTitle, noteId, authorId)
+	if e != nil {
+		print(e)
+	}
 	//handle req and Get res
+	//fmt.Println("cres: ")
+	//fmt.Println(cRes)
 	res, handleErr := handleNoteRequest(requestType, w, r, cRes)
 	if handleErr {
 		return
 	}
 	//send responseNote to front
+	//fmt.Println(res)
 	resJson, _ := json.Marshal(res)
-	fmt.Println(resJson)
+	//fmt.Println(string(resJson))
 	_, err := w.Write(resJson)
 	if err != nil {
 		return
@@ -281,12 +288,12 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 		} else {
 			jwt := createJWT(20, cRes.UserId)
 			res.Jwt = jwt
-			res.Name = cRes.UserName
+			res.Name = cRes.Name
 			w.WriteHeader(http.StatusCreated)
 		}
 	}
 	resJson, _ := json.Marshal(res)
-	fmt.Println(res)
+	//fmt.Println(res)
 	b, errw := w.Write(resJson)
 	fmt.Println(b)
 	if errw != nil {
@@ -301,17 +308,17 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (int, string, string
 	//	return "", "", "", true
 	//}
 	var requestType int
-	var noteId string
+	var noteId = "-1"
 	urlList := strings.Split(r.URL.Path, "/")
 	if len(urlList) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return requestType, "", "", "", true
 	} else if len(urlList) == 3 {
-		fmt.Println(urlList)
-		fmt.Println(len(urlList))
 		noteId = urlList[2]
-		fmt.Println(noteId)
 	}
+	fmt.Println(urlList)
+	fmt.Println(len(urlList))
+	fmt.Println(noteId)
 	//} else if len(urlList) == 2 {
 	//
 	//} else {
@@ -346,8 +353,8 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (int, string, string
 
 func handleNoteRequest(actionType int, w http.ResponseWriter, r *http.Request, cRes *pb.CacheNoteResponse) (responseNote, bool) {
 	var res responseNote
-	fmt.Println(cRes.Access)
-	fmt.Println(cRes.Exist)
+	//fmt.Println(cRes.Access)
+	//fmt.Println(cRes.Exist)
 	switch actionType {
 	case Get:
 		// Get the text.
