@@ -1,0 +1,7 @@
+login wrong pass or username    http.StatusNotAcceptable 406
+register username exist         http.StatusNotAcceptable 406
+get no note id                  http.StatusNoContent 204
+get no access note id           http.StatusUnauthorized 401
+edit no note id                 http.StatusUnauthorized 401
+delete no note id               http.StatusUnauthorized 401
+badRequest                      http.StatusBadRequest 400
