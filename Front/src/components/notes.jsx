@@ -26,19 +26,18 @@ class Notes extends Component {
   async componentDidMount() {
     const types = [{ _id: "", name: "All Types" }, ...getTypes()];
     const x = await getNotes();
-    console.log(x);
+    if (x.data && x.data.misscache) {
+      toast.warn("MissCached in the GET(all) request happened");
+    }
+    // console.log("----->", x);
     let localData = x;
     if (!localData.data.notes) {
       localData = { data: { notes: [] } };
     }
+
     const localNotes = localData.data.notes;
     this.setState({ notes: localNotes, types });
     localStorage.setItem("notes", JSON.stringify(this.state.notes));
-    // backend use cached data to set state notes
-    // modify getNotes() to return cached data
-    // delete cached notes
-    // console.log("delete notes from localStorage");
-    // localStorage.removeItem("notes");
   }
 
   // backend only if getType() is working with backend
