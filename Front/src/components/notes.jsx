@@ -6,7 +6,7 @@ import { deleteNote, getNotes } from "../services/fakeNoteService";
 import { getTypes } from "../services/typeService";
 import { paginate } from "../utils/paginate";
 import ButtonAddNote from "./buttonAddNote";
-
+import { toast } from "react-toastify";
 import _ from "lodash";
 import SearchBox from "./searchBox";
 import "bootstrap/dist/css/bootstrap-grid.css";
@@ -55,8 +55,13 @@ class Notes extends Component {
     this.setState({ notes });
     // server delete
     console.log(note);
-    let result = await deleteNote(note._id);
-    console.log(result);
+    try {
+      let result = await deleteNote(note._id);
+      console.log(result);
+    } catch (ex) {
+      if (ex.response && ex.response.status === 404)
+        toast.error("this note has already been deleted.");
+    }
   };
 
   // handleDelete = async (note) => {
