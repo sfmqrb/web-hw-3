@@ -2,42 +2,39 @@ package thecache
 
 import "fmt"
 
-type node struct {
-	key   string
-	value string
-	prev  *node
-	next  *node
+type Note struct {
+	//bun.BaseModel `bun:"table:notes,alias:u"`
+	NoteId    int    `bun:"note_id,pk,autoincrement"`
+	Note      string `bun:"note,notnull"`
+	NoteTitle string `bun:"title,notnull"`
+	AuthorId  int    `bun:"author_id"`
 }
 
-type doublyLinkedList struct {
-	limit  int
-	tail *node
-	head *node
+// notes could make error 'cause can't "append" 
+type Node struct {
+	user_id  int
+	username string
+	password string
+	name     string
+	notes    []Note
+	prev     *Node
+	next     *Node
 }
 
-func initDoublyList() *doublyLinkedList {
-	return &doublyLinkedList{}
+type DoublyLinkedList struct {
+	limit int
+	tail  *Node
+	head  *Node
 }
 
-func (d *doublyLinkedList) __AddToFront__(key, value string) { // removable
-	newNode := &node{
-		key:   key,
-		value: value,
-	}
-	if d.head == nil {
-		d.head = newNode
-		d.tail = newNode
-	} else {
-		newNode.prev = d.head
-		d.head.next = newNode
-		d.head = newNode
-	}
-	d.limit++
-	//return
+func initDoublyList(capacity int) *DoublyLinkedList {
+	d := DoublyLinkedList{
+		limit: capacity}
+	return &d
 }
 
 // changed RemoveFromFront to remove from tail
-func (d *doublyLinkedList) RemoveFromEnd() {
+func (d *DoublyLinkedList) removeFromEnd() {
 	if d.tail != nil {
 		if d.head == d.tail {
 			d.head = nil
@@ -51,7 +48,7 @@ func (d *doublyLinkedList) RemoveFromEnd() {
 }
 
 // Changed AddToEnd to AddToFront(*node)
-func (d *doublyLinkedList) AddToFront(node *node) {
+func (d *DoublyLinkedList) addToFront(node *Node) {
 	if d.head == nil {
 		d.head = node
 		d.tail = node
@@ -64,7 +61,7 @@ func (d *doublyLinkedList) AddToFront(node *node) {
 }
 
 // Changed MoveNodeToEnd to MoveNodeToFront
-func (d *doublyLinkedList) MoveNodeToFront(node *node) {
+func (d *DoublyLinkedList) moveNodeToFront(node *Node) {
 	prev := node.prev
 	next := node.next
 
@@ -83,27 +80,27 @@ func (d *doublyLinkedList) MoveNodeToFront(node *node) {
 	}
 }
 
-func (d *doublyLinkedList) TraverseForward() error {
+func (d *DoublyLinkedList) traverseForward() error {
 	if d.head == nil {
 		return fmt.Errorf("TraverseError: List is empty")
 	}
 	temp := d.head
 	for temp != nil {
-		fmt.Printf("key = %v, value = %v, prev = %v, next = %v\n", temp.key, temp.value, temp.prev, temp.next)
+		fmt.Printf("user_id = %v, name = %v, prev = %v, next = %v\n", temp.user_id, temp.name, temp.prev, temp.next)
 		temp = temp.prev
 	}
 	fmt.Println()
 	return nil
 }
 
-func (d *doublyLinkedList) Front() *node {
+func (d *DoublyLinkedList) front() *Node {
 	return d.head
 }
 
-func (d *doublyLinkedList) End() *node {
+func (d *DoublyLinkedList) end() *Node {
 	return d.tail
 }
 
-func (d *doublyLinkedList) Size() int {
+func (d *DoublyLinkedList) size() int {
 	return d.limit
 }
