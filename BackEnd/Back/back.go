@@ -34,16 +34,10 @@ const (
 	userNameExist = 6
 )
 
-var requestTypeMap = map[string]int{
-	http.MethodGet:    Get,
-	http.MethodPut:    Edit,
-	http.MethodPost:   Save,
-	http.MethodDelete: Del,
-}
-
 type requestNote struct {
 	Title string `json:"title"`
 	Text  string `json:"text"`
+	Type  string `json:"type"`
 }
 type requestLogin struct {
 	Name     string `json:"name"`
@@ -60,6 +54,7 @@ type responseLogin struct {
 type responseNote struct {
 	Text      string         `json:"text"`
 	Title     string         `json:"title"`
+	Type      string         `json:"type"`
 	NoteId    string         `json:"_id"`
 	Notes     []responseNote `json:"notes"`
 	MissCache bool           `json:"misscache"`
@@ -83,6 +78,7 @@ func toMyNote(notes []*pb.Note) []responseNote {
 		pbNotes[i] = responseNote{
 			Text:      notes[i].Text,
 			Title:     notes[i].Title,
+			Type:      notes[i].Type,
 			NoteId:    notes[i].Id,
 			MissCache: false,
 		}
@@ -166,13 +162,13 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 		//jwt real
 	}
 	//extract front requestLogin
-	requestType, noteId, note, noteTitle, done := extractRequest(w, r)
+	requestType, noteId, note, noteTitle, noteType, done := extractRequest(w, r)
 	//fmt.Println("NoteId:", noteId)
 	if done {
 		return
 	}
 	//Get data from cache
-	cRes, e := cache_client.RequestNoteCache(requestType, note, noteTitle, noteId, authorId)
+	cRes, e := cache_client.RequestNoteCache(requestType, note, noteTitle, noteType, noteId, authorId)
 	if e != nil {
 		print(e)
 	}
@@ -253,9 +249,9 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 	urlList := strings.Split(r.URL.Path, "/")
 	var ActionType int
 	if urlList[1] == "users" {
-		ActionType = 2
+		ActionType = signUp
 	} else if urlList[1] == "auth" {
-		ActionType = 1
+		ActionType = Login
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -302,7 +298,7 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func extractRequest(w http.ResponseWriter, r *http.Request) (int, string, string, string, bool) {
+func extractRequest(w http.ResponseWriter, r *http.Request) (int, string, string, string, string, bool) {
 	//if r.URL.Path != "/" {
 	//	http.NotFound(w, r)
 	//	return "", "", "", true
@@ -312,7 +308,7 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (int, string, string
 	urlList := strings.Split(r.URL.Path, "/")
 	if len(urlList) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		return requestType, "", "", "", true
+		return requestType, "", "", "", "", true
 	} else if len(urlList) == 3 {
 		noteId = urlList[2]
 	}
@@ -346,9 +342,9 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (int, string, string
 	var noteObj requestNote
 	err := json.Unmarshal([]byte(noteJson), &noteObj)
 	if err != nil {
-		return requestType, noteId, "", "", false
+		return requestType, noteId, "", "", "", false
 	}
-	return requestType, noteId, noteObj.Text, noteObj.Title, false
+	return requestType, noteId, noteObj.Text, noteObj.Title, noteObj.Type, false
 }
 
 func handleNoteRequest(actionType int, w http.ResponseWriter, r *http.Request, cRes *pb.CacheNoteResponse) (responseNote, bool) {
@@ -364,6 +360,7 @@ func handleNoteRequest(actionType int, w http.ResponseWriter, r *http.Request, c
 				res.Text = cRes.Note
 				res.Title = cRes.Title
 				res.NoteId = cRes.NoteId
+				res.Type = cRes.Type
 				w.WriteHeader(http.StatusOK)
 			} else {
 				w.WriteHeader(http.StatusNoContent)

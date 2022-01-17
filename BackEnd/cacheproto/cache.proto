@@ -16,6 +16,7 @@ message Note{
   string text = 1;
   string title = 2;
   string id = 3;
+  string type = 4;
 
 }
 message CacheNoteRequest{
@@ -24,12 +25,14 @@ message CacheNoteRequest{
   string noteTitle = 3;
   string authorId = 4;
   string note = 5;
+  string type = 6;
 
 }
 message CacheNoteResponse{
   string note = 1;
   string title = 6;
   string noteId = 2;
+  string type = 8;
   repeated Note notes = 7;
   bool exist = 3;
   bool access = 4;

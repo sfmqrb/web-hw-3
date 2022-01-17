@@ -42,6 +42,7 @@ type note struct {
 	NoteId        int    `bun:"note_id,pk,autoincrement"`
 	Note          string `bun:"note,notnull"`
 	NoteTitle     string `bun:"title,notnull"`
+	NoteType      string `bun:"type,notnull"`
 	AuthorId      int    `bun:"author_id"`
 }
 
@@ -67,6 +68,7 @@ func toMyNote(notes []note) []*pb.Note {
 			Text:  notes[i].Note,
 			Title: notes[i].NoteTitle,
 			Id:    strconv.Itoa(notes[i].NoteId),
+			Type:  notes[i].NoteType,
 		}
 	}
 	return pbNotes
@@ -149,6 +151,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			Note:      in.Note,
 			AuthorId:  aId,
 			NoteTitle: in.NoteTitle,
+			NoteType:  in.Type,
 		}
 		_, err := db.NewInsert().Model(noteObj).Returning("*").Exec(ctx)
 		if err == nil {
@@ -198,6 +201,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 				Note:      noteObj.Note,
 				NoteId:    strconv.Itoa(noteObj.NoteId),
 				Title:     noteObj.NoteTitle,
+				Type:      noteObj.NoteType,
 				Exist:     true,
 				Access:    in.AuthorId == strconv.Itoa(noteObj.AuthorId) || strconv.Itoa(noteObj.AuthorId) == "0",
 				MissCache: false,
@@ -213,6 +217,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			NoteTitle: in.NoteTitle,
 			NoteId:    nId,
 			AuthorId:  aId,
+			NoteType:  in.Type,
 		}
 		var err error
 		if aId == 0 {

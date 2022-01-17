@@ -51,13 +51,14 @@ func Connect() {
 	C = pb.NewCacheManagementClient(conn)
 	//todo
 }
-func RequestNoteCache(requestType int, note string, noteTitle string, noteId string, authorId string) (*pb.CacheNoteResponse, error) {
+func RequestNoteCache(requestType int, note string, noteTitle string, noteType string, noteId string, authorId string) (*pb.CacheNoteResponse, error) {
 	loginReq := &pb.CacheNoteRequest{
 		RequestType: int32(requestType),
 		NoteId:      noteId,
 		AuthorId:    authorId,
 		Note:        note,
 		NoteTitle:   noteTitle,
+		Type:        noteType,
 	}
 	Ctx, _ := context.WithTimeout(context.Background(), 10*time.Minute)
 	cacheNoteResponse, err := C.CacheNoteRPC(Ctx, loginReq)
