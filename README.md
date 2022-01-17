@@ -9,6 +9,3 @@ First run:
 Finally run:
 
 `npm start`
-
-
-
