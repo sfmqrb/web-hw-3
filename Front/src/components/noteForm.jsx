@@ -3,6 +3,7 @@ import Joi from "joi-browser";
 import Form from "./common/form";
 import { getNote, saveNote } from "../services/fakeNoteService";
 import { getTypes } from "../services/typeService";
+import { toast } from "react-toastify";
 
 class NoteForm extends Form {
   state = {
@@ -35,13 +36,16 @@ class NoteForm extends Form {
     // backend
     try {
       const note = await getNote(noteId);
-      console.log("note", note);
+      // console.log("note", note);
+      if (note.data.misscache) {
+        toast.warn("MissCached in the GET request happened");
+      }
       const localData = this.mapToViewModel(note);
-      console.log("local", localData);
+      // console.log("local", localData);
       this.setState({ data: localData });
-      console.log("state", this.state);
+      // console.log("state", this.state);
     } catch (ex) {
-      console.log("error", ex);
+      // console.log("error", ex);
       if (ex.response && ex.response.status === 404)
         return this.props.history.replace("/not-found");
     }

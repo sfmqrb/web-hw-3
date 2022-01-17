@@ -6,7 +6,7 @@ import { deleteNote, getNotes } from "../services/fakeNoteService";
 import { getTypes } from "../services/typeService";
 import { paginate } from "../utils/paginate";
 import ButtonAddNote from "./buttonAddNote";
-
+import { toast } from "react-toastify";
 import _ from "lodash";
 import SearchBox from "./searchBox";
 import "bootstrap/dist/css/bootstrap-grid.css";
@@ -26,19 +26,18 @@ class Notes extends Component {
   async componentDidMount() {
     const types = [{ _id: "", name: "All Types" }, ...getTypes()];
     const x = await getNotes();
-    console.log(x);
+    if (x.data && x.data.misscache) {
+      toast.warn("MissCached in the GET(all) request happened");
+    }
+    // console.log("----->", x);
     let localData = x;
     if (!localData.data.notes) {
       localData = { data: { notes: [] } };
     }
+
     const localNotes = localData.data.notes;
     this.setState({ notes: localNotes, types });
     localStorage.setItem("notes", JSON.stringify(this.state.notes));
-    // backend use cached data to set state notes
-    // modify getNotes() to return cached data
-    // delete cached notes
-    // console.log("delete notes from localStorage");
-    // localStorage.removeItem("notes");
   }
 
   // backend only if getType() is working with backend
@@ -55,8 +54,13 @@ class Notes extends Component {
     this.setState({ notes });
     // server delete
     console.log(note);
-    let result = await deleteNote(note._id);
-    console.log(result);
+    try {
+      let result = await deleteNote(note._id);
+      console.log(result);
+    } catch (ex) {
+      if (ex.response && ex.response.status === 404)
+        toast.error("this note has already been deleted.");
+    }
   };
 
   // handleDelete = async (note) => {
