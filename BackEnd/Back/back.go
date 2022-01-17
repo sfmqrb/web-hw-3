@@ -71,10 +71,10 @@ type Config struct {
 }
 
 var config Config
-var jwtTries map[string]int = map[string]int{}
+var jwtTries = map[string]int{}
 var jwtTime = map[string]time.Time{}
 
-var hmacSampleSecret = []byte("my_secret_key")
+var hmacSampleSecret = []byte("toooooooooooo secret")
 
 func toMyNote(notes []*pb.Note) []responseNote {
 	var pbNotes []responseNote

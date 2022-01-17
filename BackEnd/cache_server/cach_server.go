@@ -82,6 +82,7 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 	switch in.RequestType {
 	case Login:
 		userObj := &user{}
+		print("%d", 2)
 		err := db.NewSelect().Model(userObj).Where("user_name = ? AND password = ?", in.User, in.Pass).Scan(ctx)
 		if err != nil {
 			fmt.Println(err)
