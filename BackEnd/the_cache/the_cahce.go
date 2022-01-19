@@ -60,7 +60,22 @@ func (cache *TheCache) Clear() {
 	cache.storage = make(map[int]*Node)
 }
 
-func (cache *TheCache) SetKey(data *CacheData) bool {
+func (cache *TheCache) SetKey(node *Node) bool {
+	// todo update data of node instead
+	_, ok := cache.storage[node.UserId]
+	if ok {
+		cache.dll.moveNodeToFront(node)
+		return true
+	}
+	if cache.dll.size() >= CACHE_CAPACITY {
+		delete(cache.storage, cache.dll.tail.UserId)
+		cache.dll.removeFromEnd()
+	}
+	cache.storage[node.UserId] = node
+	cache.dll.addToFront(node)
+	return len(cache.storage) == cache.dll.size()
+}
+func (cache *TheCache) SetExistingKey(data *CacheData) bool {
 	// todo update data of data instead
 	_, ok := cache.storage[data.UserId]
 	if ok {

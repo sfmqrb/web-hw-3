@@ -62,6 +62,20 @@ func toMyNote(notes []Note) []*pb.Note {
 	}
 	return pbNotes
 }
+func probNotesToNotes(notes []*pb.Note) []Note {
+	var pbNotes []Note
+	pbNotes = make([]Note, len(notes))
+	for i := 0; i < len(notes); i++ {
+		nId, _ := strconv.Atoi(notes[i].Id)
+		pbNotes[i] = Note{
+			Note:      notes[i].Text,
+			NoteTitle: notes[i].Title,
+			NoteType:  notes[i].Type,
+			NoteId:    nId,
+		}
+	}
+	return pbNotes
+}
 func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.CacheManagement_CacheLoginRPCServer) error {
 	//todo handle request
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Minute)
@@ -70,10 +84,11 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 	//todo The cache
 	//check cache
 	//back to DB if not exist
+	cacheData := &CacheData{}
 	switch in.RequestType {
 	case Login:
+		node := cache.GetKey()
 		userObj := &user{}
-		print("%d", 2)
 		err := db.NewSelect().Model(userObj).Where("user_name = ? AND password = ?", in.User, in.Pass).Scan(ctx)
 		if err != nil {
 			fmt.Println(err)
@@ -149,7 +164,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			cacheData.CommandType = Save
 			cacheData.UserId = aId
 			cacheData.Notes = []Note{noteObj}
-			cache.SetKey(cacheData)
+			cache.SetExistingKey(cacheData)
 		}
 	case Del:
 		nId, _ := strconv.Atoi(in.NoteId)
@@ -178,18 +193,38 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			res.Access = false
 		}
 	case GetAll:
-		var notes []Note
-		err := db.NewSelect().Model(&notes).Where("author_id = ?", in.AuthorId).Scan(ctx)
-		if err != nil {
-			fmt.Println(err)
-			res.Exist = false
+		aid, _ := strconv.Atoi(in.AuthorId)
+		node := cache.GetKey(aid)
+		if node == nil {
+			res.MissCache = true
+			{
+				node = new(Node)
+				var notes []Note
+				err := db.NewSelect().Model(&notes).Where("author_id = ?", in.AuthorId).Scan(ctx)
+				if err != nil {
+					fmt.Println(err)
+					res.Exist = false
+				} else {
+					res.Notes = toMyNote(notes)
+					res.Exist = true
+					res.Access = true
+					node.UserId, _ = strconv.Atoi(in.AuthorId)
+					node.Notes = notes
+					userObj := &user{}
+					err := db.NewSelect().Model(userObj).Where("user_id = ?", aid).Scan(ctx)
+					if err != nil {
+						// todo fosh
+					}
+					node.Name = userObj.Name
+					node.UserName = userObj.UserName
+					node.Password = userObj.Password
+					cache.SetKey(node)
+				}
+			}
 		} else {
-			res.Notes = toMyNote(notes)
 			res.Exist = true
 			res.Access = true
-			cacheData.CommandType = GetAll
-			cacheData.UserId, _ = strconv.Atoi(in.AuthorId)
-			cacheData.Notes = notes
+			res.Notes = toMyNote(node.Notes)
 		}
 	case Get:
 		aid, _ := strconv.Atoi(in.AuthorId)
@@ -197,12 +232,14 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 		if node == nil {
 			res.MissCache = true
 			{
+				node := new(Node)
 				noteObj := Note{}
 				err := db.NewSelect().Model(noteObj).Where("note_id = ?", in.NoteId).Scan(ctx)
 				if err != nil {
 					fmt.Println(err)
 					res.Exist = false
 				} else {
+					aid, _ := strconv.Atoi(in.AuthorId)
 					res = &pb.CacheNoteResponse{
 						Note:      noteObj.Note,
 						NoteId:    strconv.Itoa(noteObj.NoteId),
@@ -212,10 +249,14 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 						Access:    in.AuthorId == strconv.Itoa(noteObj.AuthorId) || strconv.Itoa(noteObj.AuthorId) == "0",
 						MissCache: false,
 					}
-					cacheData.CommandType = Get
-					cacheData.UserId, _ = strconv.Atoi(in.AuthorId)
+					cacheData.UserId = aid
 					cacheData.Notes = []Note{noteObj}
-					cache.SetKey(cacheData)
+					userObj := &user{}
+					err := db.NewSelect().Model(userObj).Where("user_id = ?", aid).Scan(ctx)
+					if err != nil {
+						//todo fosh?
+					}
+					cache.SetKey(node)
 					//todo missCache
 				}
 			}

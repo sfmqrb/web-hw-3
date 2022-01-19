@@ -71,7 +71,7 @@ var jwtTime = map[string]time.Time{}
 
 var hmacSampleSecret = []byte("toooooooooooo secret")
 
-func toMyNote(notes []*pb.Note) []responseNote {
+func probNotesToNotes(notes []*pb.Note) []responseNote {
 	var pbNotes []responseNote
 	pbNotes = make([]responseNote, len(notes))
 	for i := 0; i < len(notes); i++ {
@@ -272,7 +272,7 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 				//todo Config session length
 				jwt := createJWT(20, cRes.UserId)
 				res.Jwt = jwt
-				res.Notes = toMyNote(cRes.Notes)
+				res.Notes = probNotesToNotes(cRes.Notes)
 				res.Name = cRes.Name
 			}
 		} else {
@@ -373,7 +373,7 @@ func handleNoteRequest(actionType int, w http.ResponseWriter, r *http.Request, c
 		res.MissCache = cRes.MissCache
 		if cRes.Access {
 			if cRes.Exist {
-				res.Notes = toMyNote(cRes.Notes)
+				res.Notes = probNotesToNotes(cRes.Notes)
 				w.WriteHeader(http.StatusOK)
 			} else {
 				w.WriteHeader(http.StatusNoContent)
