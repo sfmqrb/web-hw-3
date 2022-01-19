@@ -99,6 +99,10 @@ func (cache *TheCache) GetKey(id int) *Node {
 	return nil
 }
 
+func (cache *TheCache) GetUserKey(username string, password string) *Node {
+	//implementation neede
+}
+
 // func main() {
 // 	neg := Node{
 // 		UserId:  12,
