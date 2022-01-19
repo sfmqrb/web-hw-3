@@ -15,28 +15,27 @@ commands: getkey, setkey, clear
 
 // var dll *DoublyLinkedList = initDoublyList(CACHE_CAPACITY)
 
-type thecache struct {
+type TheCache struct {
 	dll     *DoublyLinkedList
 	storage map[int]*Node
 	//const MAX_CAPACITY
 }
 
-func initCache() thecache {
+func InitCache() TheCache {
 	storage := make(map[int]*Node)
-	return thecache{
+	return TheCache{
 		dll:     &DoublyLinkedList{},
 		storage: storage,
 		// MAX_Capacity:      maxCapacity,
 	}
 }
 
-func (cache *thecache) clear() {
+func (cache *TheCache) clear() {
 	cache.dll = initDoublyList(CACHE_CAPACITY)
 	cache.storage = make(map[int]*Node)
 }
 
-
-func (cache *thecache) setKey(id int, node *Node) bool {
+func (cache *TheCache) setKey(id int, node *Node) bool {
 	_, ok := cache.storage[id]
 	if ok {
 		cache.dll.moveNodeToFront(node)
@@ -48,10 +47,10 @@ func (cache *thecache) setKey(id int, node *Node) bool {
 	}
 	cache.storage[id] = node
 	cache.dll.addToFront(node)
-	return (len(cache.storage) == cache.dll.size())
+	return len(cache.storage) == cache.dll.size()
 }
 
-func (cache *thecache) getKey(id int) *Node {
+func (cache *TheCache) getKey(id int) *Node {
 	node, ok := cache.storage[id]
 	if ok {
 		return node

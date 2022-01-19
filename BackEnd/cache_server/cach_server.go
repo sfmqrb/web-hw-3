@@ -4,17 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	pb "hw3/BackEnd/cacheproto"
-	"log"
-	"net"
-	"strconv"
-	"time"
-
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
 	"google.golang.org/grpc"
+	pb "hw3/BackEnd/cacheproto"
+	"hw3/BackEnd/the_cache"
+	"log"
+	"net"
+	"strconv"
+	"time"
 )
 
 const (
@@ -58,6 +58,7 @@ type CacheManagementServer struct {
 	pb.UnimplementedCacheManagementServer
 }
 
+var cache thecache.TheCache
 var db *bun.DB
 
 func toMyNote(notes []note) []*pb.Note {
@@ -253,6 +254,7 @@ func connectToDB() {
 }
 func main() {
 	connectToDB()
+	cache = thecache.InitCache()
 	startGrpcServer()
 }
 
