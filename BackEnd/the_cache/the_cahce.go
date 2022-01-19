@@ -3,14 +3,39 @@ package thecache
 //import "fmt"
 
 // configurables
+//todo config file
+var CACHE_CAPACITY int
+
 const (
-	PORT           int = 5432
-	CACHE_CAPACITY int = 20
+
+	// action types of cache Note request
+
+	Save   = 1
+	Del    = 2
+	Get    = 3
+	GetAll = 5
+	Edit   = 4
+
+	// action types of cache login request
+
+	Login  = 1
+	SignUp = 2
+
+	// data types of cache_data
 )
+
+type CacheData struct {
+	CommandType int
+	UserId      int
+	UserName    string
+	Password    string
+	Name        string
+	Notes       []Note
+}
 
 /*  keys and values are int32 or string
 keys -> 64 char / values -> 2048 char
-commands: getkey, setkey, clear
+commands: getkey, setkey, Clear
 */
 
 // var dll *DoublyLinkedList = initDoublyList(CACHE_CAPACITY)
@@ -30,27 +55,28 @@ func InitCache() TheCache {
 	}
 }
 
-func (cache *TheCache) clear() {
+func (cache *TheCache) Clear() {
 	cache.dll = initDoublyList(CACHE_CAPACITY)
 	cache.storage = make(map[int]*Node)
 }
 
-func (cache *TheCache) setKey(id int, node *Node) bool {
-	_, ok := cache.storage[id]
+func (cache *TheCache) SetKey(data *CacheData) bool {
+	// todo update data of data instead
+	_, ok := cache.storage[data.UserId]
 	if ok {
-		cache.dll.moveNodeToFront(node)
+		cache.dll.moveNodeToFront(data)
 		return true
 	}
 	if cache.dll.size() >= CACHE_CAPACITY {
-		delete(cache.storage, cache.dll.tail.user_id)
+		delete(cache.storage, cache.dll.tail.UserId)
 		cache.dll.removeFromEnd()
 	}
-	cache.storage[id] = node
-	cache.dll.addToFront(node)
+	cache.storage[data.UserId] = data
+	cache.dll.addToFront(data)
 	return len(cache.storage) == cache.dll.size()
 }
 
-func (cache *TheCache) getKey(id int) *Node {
+func (cache *TheCache) GetKey(id int) *Node {
 	node, ok := cache.storage[id]
 	if ok {
 		return node
@@ -60,11 +86,11 @@ func (cache *TheCache) getKey(id int) *Node {
 
 // func main() {
 // 	neg := Node{
-// 		user_id:  12,
-// 		username: "nima",
-// 		password: "159159",
-// 		name:     "bookWorn",
-// 		notes:    []Note{},
+// 		UserId:  12,
+// 		UserName: "nima",
+// 		Password: "159159",
+// 		Name:     "bookWorn",
+// 		Notes:    []Note{},
 // 	}
 // 	dll.AddToFront(&neg)
 // }

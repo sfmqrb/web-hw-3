@@ -1,24 +1,29 @@
 package thecache
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/uptrace/bun"
+)
 
 type Note struct {
-	//bun.BaseModel `bun:"table:notes,alias:u"`
-	NoteId    int    `bun:"note_id,pk,autoincrement"`
-	Note      string `bun:"note,notnull"`
-	NoteTitle string `bun:"title,notnull"`
-	AuthorId  int    `bun:"author_id"`
+	bun.BaseModel `bun:"table:notes,alias:u"`
+	NoteId        int    `bun:"note_id,pk,autoincrement"`
+	Note          string `bun:"Note,notnull"`
+	NoteTitle     string `bun:"title,notnull"`
+	AuthorId      int    `bun:"type,notnull"`
+	NoteType      string `bun:"author_id"`
 }
 
-// notes could make error 'cause can't "append" 
+//Notes could make error 'cause can't "append"
+
 type Node struct {
-	user_id  int
-	username string
-	password string
-	name     string
-	notes    []Note
-	prev     *Node
-	next     *Node
+	UserId   int
+	UserName string
+	Password string
+	Name     string
+	Notes    []Note
+	Prev     *Node
+	Next     *Node
 }
 
 type DoublyLinkedList struct {
@@ -40,8 +45,8 @@ func (d *DoublyLinkedList) removeFromEnd() {
 			d.head = nil
 			d.tail = nil
 		} else {
-			d.tail = d.tail.prev
-			d.tail.prev = nil
+			d.tail = d.tail.Prev
+			d.tail.Prev = nil
 		}
 		d.limit--
 	}
@@ -53,8 +58,8 @@ func (d *DoublyLinkedList) addToFront(node *Node) {
 		d.head = node
 		d.tail = node
 	} else {
-		node.prev = d.head
-		d.head.next = node
+		node.Prev = d.head
+		d.head.Next = node
 		d.head = node
 	}
 	d.limit++
@@ -62,20 +67,20 @@ func (d *DoublyLinkedList) addToFront(node *Node) {
 
 // Changed MoveNodeToEnd to MoveNodeToFront
 func (d *DoublyLinkedList) moveNodeToFront(node *Node) {
-	prev := node.prev
-	next := node.next
+	prev := node.Prev
+	next := node.Next
 
 	if next != nil {
 		if prev != nil {
-			next.prev = prev
-			prev.next = next
+			next.Prev = prev
+			prev.Next = next
 		} else {
 			d.tail = next
-			next.prev = nil
+			next.Prev = nil
 		}
-		d.head.next = node
-		node.prev = d.head
-		node.next = nil
+		d.head.Next = node
+		node.Prev = d.head
+		node.Next = nil
 		d.head = node
 	}
 }
@@ -86,8 +91,8 @@ func (d *DoublyLinkedList) traverseForward() error {
 	}
 	temp := d.head
 	for temp != nil {
-		fmt.Printf("user_id = %v, name = %v, prev = %v, next = %v\n", temp.user_id, temp.name, temp.prev, temp.next)
-		temp = temp.prev
+		fmt.Printf("UserId = %v, Name = %v, Prev = %v, Next = %v\n", temp.UserId, temp.Name, temp.Prev, temp.Next)
+		temp = temp.Prev
 	}
 	fmt.Println()
 	return nil
