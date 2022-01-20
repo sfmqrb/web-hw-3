@@ -1,15 +1,21 @@
 package thecache
 
+import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+)
+
 //import "fmt"
 
 // configurables
 //todo config file
-var CACHE_CAPACITY int
+var CACHE_CAPACITY int //`json:"MAX_CAPACITY"`
 
 const (
 
 	// action types of cache Note request
-
+	/////////////////// WHY ONLY NOTE THOUGH?
 	Save   = 1
 	Del    = 2
 	Get    = 3
@@ -38,8 +44,6 @@ keys -> 64 char / values -> 2048 char
 commands: getkey, setkey, Clear
 */
 
-// var dll *DoublyLinkedList = initDoublyList(CACHE_CAPACITY)
-
 type TheCache struct {
 	dll     *DoublyLinkedList
 	storage map[int]*Node
@@ -47,6 +51,15 @@ type TheCache struct {
 
 func InitCache() TheCache {
 	storage := make(map[int]*Node)
+	configFile, err := os.Open("cache_config.json")
+	if err != nil {
+		CACHE_CAPACITY = 16
+	}
+	defer configFile.Close()
+	byteValue, _ := ioutil.ReadAll(configFile)
+	var configuration map[string]int
+	json.Unmarshal([]byte(byteValue), &configuration)
+	CACHE_CAPACITY = configuration["MAX_CAPACITY"]
 	return TheCache{
 		dll:     &DoublyLinkedList{},
 		storage: storage,
@@ -59,7 +72,6 @@ func (cache *TheCache) Clear() {
 }
 
 func (cache *TheCache) SetKey(node *Node) bool {
-	// todo update data of node instead
 	_, ok := cache.storage[node.UserId]
 	if ok {
 		cache.dll.moveNodeToFront(node)
@@ -126,7 +138,6 @@ func (cache *TheCache) SetExistingKey(data *CacheData) bool {
 		}
 		cache.dll.moveNodeToFront(node)
 		return true
-
 	}
 	return false
 }
