@@ -92,8 +92,19 @@ func (cache *TheCache) SetExistingKey(data *CacheData) bool {
 				node.Notes = append(node.Notes, data.Notes...)
 			}
 		case Del:
-			//////////////////////////
+			// is this implementation of edit true?
+			if len(data.Notes) > 0 {
+				for index, note := range node.Notes {
+					if note.NoteId == data.Notes[0].NoteId {
+						node.Notes[index] = node.Notes[len(node.Notes)-1]
+						node.Notes[len(node.Notes)-1] = Note{}
+						node.Notes = node.Notes[:len(node.Notes)-1]
+						break
+					}
+				}
+			}
 		case Edit:
+			// is this implementation of edit true?
 			if data.UserName != "" {
 				node.UserName = data.UserName
 			}
@@ -104,7 +115,12 @@ func (cache *TheCache) SetExistingKey(data *CacheData) bool {
 				node.Name = data.Name
 			}
 			if len(data.Notes) > 0 {
-				node.Notes = append(node.Notes, data.Notes...)
+				for index, note := range node.Notes {
+					if note.NoteId == data.Notes[0].NoteId {
+						node.Notes[index] = data.Notes[0]
+						break
+					}
+				}
 			}
 
 		}
