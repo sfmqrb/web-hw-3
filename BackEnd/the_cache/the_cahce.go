@@ -43,7 +43,6 @@ commands: getkey, setkey, Clear
 type TheCache struct {
 	dll     *DoublyLinkedList
 	storage map[int]*Node
-	//const MAX_CAPACITY
 }
 
 func InitCache() TheCache {
@@ -51,7 +50,6 @@ func InitCache() TheCache {
 	return TheCache{
 		dll:     &DoublyLinkedList{},
 		storage: storage,
-		// MAX_Capacity:      maxCapacity,
 	}
 }
 
@@ -77,39 +75,61 @@ func (cache *TheCache) SetKey(node *Node) bool {
 }
 func (cache *TheCache) SetExistingKey(data *CacheData) bool {
 	// todo update data of data instead
-	_, ok := cache.storage[data.UserId]
+	node, ok := cache.storage[data.UserId]
 	if ok {
-		cache.dll.moveNodeToFront(data)
+		switch data.CommandType {
+		case Save:
+			if data.UserName != "" {
+				node.UserName = data.UserName
+			}
+			if data.Password != "" {
+				node.Password = data.Password
+			}
+			if data.Name != "" {
+				node.Name = data.Name
+			}
+			if len(data.Notes) > 0 {
+				node.Notes = append(node.Notes, data.Notes...)
+			}
+		case Del:
+			//////////////////////////
+		case Edit:
+			if data.UserName != "" {
+				node.UserName = data.UserName
+			}
+			if data.Password != "" {
+				node.Password = data.Password
+			}
+			if data.Name != "" {
+				node.Name = data.Name
+			}
+			if len(data.Notes) > 0 {
+				node.Notes = append(node.Notes, data.Notes...)
+			}
+
+		}
+		cache.dll.moveNodeToFront(node)
 		return true
+
 	}
-	if cache.dll.size() >= CACHE_CAPACITY {
-		delete(cache.storage, cache.dll.tail.UserId)
-		cache.dll.removeFromEnd()
-	}
-	cache.storage[data.UserId] = data
-	cache.dll.addToFront(data)
-	return len(cache.storage) == cache.dll.size()
+	return false
 }
 
 func (cache *TheCache) GetKey(id int) *Node {
 	node, ok := cache.storage[id]
 	if ok {
+		cache.dll.moveNodeToFront(node)
 		return node
 	}
 	return nil
 }
 
 func (cache *TheCache) GetUserKey(username string, password string) *Node {
-	//implementation neede
+	for _, node := range cache.storage {
+		if node.UserName == username && node.Password == password {
+			cache.dll.moveNodeToFront(node)
+			return node
+		}
+	}
+	return nil
 }
-
-// func main() {
-// 	neg := Node{
-// 		UserId:  12,
-// 		UserName: "nima",
-// 		Password: "159159",
-// 		Name:     "bookWorn",
-// 		Notes:    []Note{},
-// 	}
-// 	dll.AddToFront(&neg)
-// }
