@@ -1,7 +1,6 @@
 package thecache
 
 import (
-	"fmt"
 	"github.com/uptrace/bun"
 )
 
@@ -27,14 +26,14 @@ type Node struct {
 }
 
 type DoublyLinkedList struct {
-	limit int
-	tail  *Node
-	head  *Node
+	length int
+	tail   *Node
+	head   *Node
 }
 
 func initDoublyList(capacity int) *DoublyLinkedList {
 	d := DoublyLinkedList{
-		limit: capacity}
+		length: capacity}
 	return &d
 }
 
@@ -45,10 +44,10 @@ func (d *DoublyLinkedList) removeFromEnd() {
 			d.head = nil
 			d.tail = nil
 		} else {
-			d.tail = d.tail.Prev
+			d.tail = d.tail.Next
 			d.tail.Prev = nil
 		}
-		d.limit--
+		d.length--
 	}
 }
 
@@ -62,7 +61,7 @@ func (d *DoublyLinkedList) addToFront(node *Node) {
 		d.head.Next = node
 		d.head = node
 	}
-	d.limit++
+	d.length++
 }
 
 // Changed MoveNodeToEnd to MoveNodeToFront
@@ -85,19 +84,6 @@ func (d *DoublyLinkedList) moveNodeToFront(node *Node) {
 	}
 }
 
-func (d *DoublyLinkedList) traverseForward() error {
-	if d.head == nil {
-		return fmt.Errorf("TraverseError: List is empty")
-	}
-	temp := d.head
-	for temp != nil {
-		fmt.Printf("UserId = %v, Name = %v, Prev = %v, Next = %v\n", temp.UserId, temp.Name, temp.Prev, temp.Next)
-		temp = temp.Prev
-	}
-	fmt.Println()
-	return nil
-}
-
 func (d *DoublyLinkedList) front() *Node {
 	return d.head
 }
@@ -107,5 +93,5 @@ func (d *DoublyLinkedList) end() *Node {
 }
 
 func (d *DoublyLinkedList) size() int {
-	return d.limit
+	return d.length
 }

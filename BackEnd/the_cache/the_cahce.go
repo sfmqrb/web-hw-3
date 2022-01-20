@@ -2,20 +2,19 @@ package thecache
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"os"
 )
 
 //import "fmt"
 
 // configurables
 //todo config file
-var CACHE_CAPACITY int //`json:"MAX_CAPACITY"`
+var CACHE_CAPACITY int
 
 const (
 
 	// action types of cache Note request
-	/////////////////// WHY ONLY NOTE THOUGH?
 	Save   = 1
 	Del    = 2
 	Get    = 3
@@ -23,7 +22,6 @@ const (
 	Edit   = 4
 
 	// action types of cache login request
-
 	Login  = 1
 	SignUp = 2
 
@@ -49,17 +47,18 @@ type TheCache struct {
 	storage map[int]*Node
 }
 
+//////////////	CHANGE PATH	\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 func InitCache() TheCache {
 	storage := make(map[int]*Node)
-	configFile, err := os.Open("cache_config.json")
+	configFile, err := ioutil.ReadFile("../cache_config.json")
+	var configuration map[string]int
+	json.Unmarshal([]byte(configFile), &configuration)
+	//json.Unmarshal(configFile, &configuration)
+	CACHE_CAPACITY = configuration["MAX_CAPACITY"]
 	if err != nil {
 		CACHE_CAPACITY = 16
 	}
-	defer configFile.Close()
-	byteValue, _ := ioutil.ReadAll(configFile)
-	var configuration map[string]int
-	json.Unmarshal([]byte(byteValue), &configuration)
-	CACHE_CAPACITY = configuration["MAX_CAPACITY"]
 	return TheCache{
 		dll:     &DoublyLinkedList{},
 		storage: storage,
@@ -86,7 +85,6 @@ func (cache *TheCache) SetKey(node *Node) bool {
 	return len(cache.storage) == cache.dll.size()
 }
 func (cache *TheCache) SetExistingKey(data *CacheData) bool {
-	// todo update data of data instead
 	node, ok := cache.storage[data.UserId]
 	if ok {
 		switch data.CommandType {
@@ -104,7 +102,6 @@ func (cache *TheCache) SetExistingKey(data *CacheData) bool {
 				node.Notes = append(node.Notes, data.Notes...)
 			}
 		case Del:
-			// is this implementation of edit true?
 			if len(data.Notes) > 0 {
 				for index, note := range node.Notes {
 					if note.NoteId == data.Notes[0].NoteId {
@@ -116,7 +113,6 @@ func (cache *TheCache) SetExistingKey(data *CacheData) bool {
 				}
 			}
 		case Edit:
-			// is this implementation of edit true?
 			if data.UserName != "" {
 				node.UserName = data.UserName
 			}
@@ -159,4 +155,18 @@ func (cache *TheCache) GetUserKey(username string, password string) *Node {
 		}
 	}
 	return nil
+}
+
+//////////////////////////////////////////////////////	test functions
+
+func PrintCache(cache TheCache) {
+	fmt.Println("\n|||||||||||||||||\t Printing Cache Content \t|||||||||||||||||")
+	for k, v := range cache.storage {
+		fmt.Printf("%d:  %s\nNote:\t", k, v.UserName)
+		for _, note := range v.Notes {
+			fmt.Printf("%d -> %s(%s) \t ", note.NoteId, note.NoteTitle, note.NoteType)
+		}
+		fmt.Println("\n______________________________________________________________")
+	}
+	fmt.Println("\n|||||||||||||||||\t\t The End \t\t|||||||||||||||||\n\n")
 }
