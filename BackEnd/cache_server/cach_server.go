@@ -84,7 +84,6 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 	//todo The cache
 	//check cache
 	//back to DB if not exist
-	cacheData := &CacheData{}
 	switch in.RequestType {
 	case Login:
 		node := cache.GetUserKey(in.User, in.Pass)
@@ -139,14 +138,14 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 				//	fmt.Println(err)
 				//	return err
 				//}
+				node := new(Node)
 				res.UserId = strconv.FormatInt(int64(userObj.UserId), 10)
 				res.Name = userObj.Name
 				res.UserName = userObj.UserName
-				cacheData.CommandType = SignUp
-				cacheData.Name = userObj.Name
-				cacheData.UserName = userObj.UserName
-				cacheData.Password = userObj.Password
-				cache.SetExistingKey(cacheData)
+				node.Name = userObj.Name
+				node.UserName = userObj.UserName
+				node.Password = userObj.Password
+				cache.SetKey(node)
 			}
 		}
 	}
@@ -307,6 +306,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			cacheData.CommandType = Edit
 			cacheData.UserId, _ = strconv.Atoi(in.AuthorId)
 			cacheData.Notes = []Note{noteObj}
+			cache.SetExistingKey(cacheData)
 		} else {
 			res.Access = false
 			res.Exist = false
