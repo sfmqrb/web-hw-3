@@ -3,7 +3,7 @@ package thecache
 //import "fmt"
 
 // configurables
-//todo config file
+// todo config file
 var CACHE_CAPACITY int
 
 const (
@@ -100,7 +100,7 @@ func (cache *TheCache) GetKey(id int) *Node {
 }
 
 func (cache *TheCache) GetUserKey(username string, password string) *Node {
-	//implementation neede
+	// todo implementation neede
 }
 
 // func main() {

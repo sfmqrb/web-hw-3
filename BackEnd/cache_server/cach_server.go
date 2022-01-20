@@ -87,20 +87,37 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 	cacheData := &CacheData{}
 	switch in.RequestType {
 	case Login:
-		node := cache.GetKey()
-		userObj := &user{}
-		err := db.NewSelect().Model(userObj).Where("user_name = ? AND password = ?", in.User, in.Pass).Scan(ctx)
-		if err != nil {
-			fmt.Println(err)
-			res.WrongPass = true
+		node := cache.GetUserKey(in.User, in.Pass)
+		if node != nil {
+			res.MissCache = true
+			{
+				node = new(Node)
+				userObj := &user{}
+				err := db.NewSelect().Model(userObj).Where("user_name = ? AND password = ?", in.User, in.Pass).Scan(ctx)
+				if err != nil {
+					fmt.Println(err)
+					res.WrongPass = true
+				} else {
+					res.UserId = strconv.Itoa(userObj.UserId)
+					res.Exist = true
+					var notes []Note
+					err = db.NewSelect().Model(&notes).Where("author_id = ?", res.UserId).Scan(ctx)
+					res.Notes = toMyNote(notes)
+					res.UserName = userObj.UserName
+					res.Name = userObj.Name
+					node.UserName = userObj.UserName
+					node.Name = userObj.Name
+					node.Password = userObj.Password
+					node.Notes = notes
+					cache.SetKey(node)
+				}
+			}
 		} else {
-			res.UserId = strconv.Itoa(userObj.UserId)
 			res.Exist = true
-			var notes []Note
-			err = db.NewSelect().Model(&notes).Where("author_id = ?", res.UserId).Scan(ctx)
-			res.Notes = toMyNote(notes)
-			res.UserName = userObj.UserName
-			res.Name = userObj.Name
+			res.WrongPass = false
+			res.Notes = toMyNote(node.Notes)
+			res.UserName = node.UserName
+			res.Name = node.Name
 		}
 	case SignUp:
 		userObj := &user{}
@@ -125,6 +142,11 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 				res.UserId = strconv.FormatInt(int64(userObj.UserId), 10)
 				res.Name = userObj.Name
 				res.UserName = userObj.UserName
+				cacheData.CommandType = SignUp
+				cacheData.Name = userObj.Name
+				cacheData.UserName = userObj.UserName
+				cacheData.Password = userObj.Password
+				cache.SetExistingKey(cacheData)
 			}
 		}
 	}
