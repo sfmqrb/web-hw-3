@@ -76,6 +76,14 @@ func probNotesToNotes(notes []*pb.Note) []Note {
 	}
 	return pbNotes
 }
+func findNodeById(notes []Note, nId int) *Note {
+	for _, note := range notes {
+		if note.NoteId == nId {
+			return &note
+		}
+	}
+	return nil
+}
 func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.CacheManagement_CacheLoginRPCServer) error {
 	//todo handle request
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Minute)
@@ -133,11 +141,6 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 			}
 			_, err := db.NewInsert().Model(userObj).Exec(ctx)
 			if err == nil {
-				//id, err := exec.LastInsertId()
-				//if err != nil {
-				//	fmt.Println(err)
-				//	return err
-				//}
 				node := new(Node)
 				res.UserId = strconv.FormatInt(int64(userObj.UserId), 10)
 				res.Name = userObj.Name
@@ -185,7 +188,10 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			cacheData.CommandType = Save
 			cacheData.UserId = aId
 			cacheData.Notes = []Note{noteObj}
-			cache.SetExistingKey(cacheData)
+			exist := cache.SetExistingKey(cacheData)
+			if !exist {
+				createCacheNode(aId, ctx)
+			}
 		}
 	case Del:
 		nId, _ := strconv.Atoi(in.NoteId)
@@ -207,6 +213,10 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 				cacheData.CommandType = Del
 				cacheData.UserId = aId
 				cacheData.Notes = []Note{noteObj}
+				exist := cache.SetExistingKey(cacheData)
+				if !exist {
+					createCacheNode(aId, ctx)
+				}
 			}
 		} else {
 			print(err)
@@ -229,13 +239,13 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 					res.Notes = toMyNote(notes)
 					res.Exist = true
 					res.Access = true
-					node.UserId, _ = strconv.Atoi(in.AuthorId)
-					node.Notes = notes
 					userObj := &user{}
 					err := db.NewSelect().Model(userObj).Where("user_id = ?", aid).Scan(ctx)
 					if err != nil {
 						// todo fosh
 					}
+					node.UserId, _ = strconv.Atoi(in.AuthorId)
+					node.Notes = notes
 					node.Name = userObj.Name
 					node.UserName = userObj.UserName
 					node.Password = userObj.Password
@@ -253,7 +263,6 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 		if node == nil {
 			res.MissCache = true
 			{
-				node := new(Node)
 				noteObj := Note{}
 				err := db.NewSelect().Model(noteObj).Where("note_id = ?", in.NoteId).Scan(ctx)
 				if err != nil {
@@ -270,16 +279,22 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 						Access:    in.AuthorId == strconv.Itoa(noteObj.AuthorId) || strconv.Itoa(noteObj.AuthorId) == "0",
 						MissCache: false,
 					}
-					cacheData.UserId = aid
-					cacheData.Notes = []Note{noteObj}
-					userObj := &user{}
-					err := db.NewSelect().Model(userObj).Where("user_id = ?", aid).Scan(ctx)
-					if err != nil {
-						//todo fosh?
-					}
-					cache.SetKey(node)
-					//todo missCache
+					createCacheNode(aid, ctx)
 				}
+			}
+		} else {
+			nId, _ := strconv.Atoi(in.NoteId)
+			note := findNodeById(node.Notes, nId)
+			if note != nil {
+				res.Exist = true
+				res.Access = false
+				res.Note = note.Note
+				res.Title = note.NoteTitle
+				res.Type = note.NoteType
+				res.NoteId = in.NoteId
+			} else {
+				res.Exist = false
+				res.Access = false
 			}
 		}
 	case Edit:
@@ -306,7 +321,10 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			cacheData.CommandType = Edit
 			cacheData.UserId, _ = strconv.Atoi(in.AuthorId)
 			cacheData.Notes = []Note{noteObj}
-			cache.SetExistingKey(cacheData)
+			exist := cache.SetExistingKey(cacheData)
+			if !exist {
+				createCacheNode(aId, ctx)
+			}
 		} else {
 			res.Access = false
 			res.Exist = false
@@ -329,6 +347,19 @@ func connectToDB() {
 	db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 	//userObj := &user{}
 	//err := db.NewSelect().Model(userObj).Where("user_name = ? AND password = ?", "amir", "Xamm2666").Scan(context.Context())
+}
+func createCacheNode(uId int, ctx context.Context) {
+	userObj := &user{}
+	_ = db.NewSelect().Model(userObj).Where("user_id = ?", uId).Scan(ctx)
+	var notes []Note
+	_ = db.NewSelect().Model(&notes).Where("author_id = ?", uId).Scan(ctx)
+	node := new(Node)
+	node.Notes = notes
+	node.UserName = userObj.UserName
+	node.Name = userObj.Name
+	node.Password = userObj.Password
+	node.UserId = uId
+	cache.SetKey(node)
 }
 func main() {
 	connectToDB()
