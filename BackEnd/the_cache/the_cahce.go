@@ -1,15 +1,21 @@
 package thecache
 
+import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
+)
+
 //import "fmt"
 
 // configurables
-// todo config file
-var CACHE_CAPACITY int
+//todo config file
+var CACHE_CAPACITY int //`json:"MAX_CAPACITY"`
 
 const (
 
 	// action types of cache Note request
-
+	/////////////////// WHY ONLY NOTE THOUGH?
 	Save   = 1
 	Del    = 2
 	Get    = 3
@@ -38,20 +44,25 @@ keys -> 64 char / values -> 2048 char
 commands: getkey, setkey, Clear
 */
 
-// var dll *DoublyLinkedList = initDoublyList(CACHE_CAPACITY)
-
 type TheCache struct {
 	dll     *DoublyLinkedList
 	storage map[int]*Node
-	//const MAX_CAPACITY
 }
 
 func InitCache() TheCache {
 	storage := make(map[int]*Node)
+	configFile, err := os.Open("cache_config.json")
+	if err != nil {
+		CACHE_CAPACITY = 16
+	}
+	defer configFile.Close()
+	byteValue, _ := ioutil.ReadAll(configFile)
+	var configuration map[string]int
+	json.Unmarshal([]byte(byteValue), &configuration)
+	CACHE_CAPACITY = configuration["MAX_CAPACITY"]
 	return TheCache{
 		dll:     &DoublyLinkedList{},
 		storage: storage,
-		// MAX_Capacity:      maxCapacity,
 	}
 }
 
@@ -61,7 +72,6 @@ func (cache *TheCache) Clear() {
 }
 
 func (cache *TheCache) SetKey(node *Node) bool {
-	// todo update data of node instead
 	_, ok := cache.storage[node.UserId]
 	if ok {
 		cache.dll.moveNodeToFront(node)
@@ -77,39 +87,76 @@ func (cache *TheCache) SetKey(node *Node) bool {
 }
 func (cache *TheCache) SetExistingKey(data *CacheData) bool {
 	// todo update data of data instead
-	_, ok := cache.storage[data.UserId]
+	node, ok := cache.storage[data.UserId]
 	if ok {
-		cache.dll.moveNodeToFront(data)
+		switch data.CommandType {
+		case Save:
+			if data.UserName != "" {
+				node.UserName = data.UserName
+			}
+			if data.Password != "" {
+				node.Password = data.Password
+			}
+			if data.Name != "" {
+				node.Name = data.Name
+			}
+			if len(data.Notes) > 0 {
+				node.Notes = append(node.Notes, data.Notes...)
+			}
+		case Del:
+			// is this implementation of edit true?
+			if len(data.Notes) > 0 {
+				for index, note := range node.Notes {
+					if note.NoteId == data.Notes[0].NoteId {
+						node.Notes[index] = node.Notes[len(node.Notes)-1]
+						node.Notes[len(node.Notes)-1] = Note{}
+						node.Notes = node.Notes[:len(node.Notes)-1]
+						break
+					}
+				}
+			}
+		case Edit:
+			// is this implementation of edit true?
+			if data.UserName != "" {
+				node.UserName = data.UserName
+			}
+			if data.Password != "" {
+				node.Password = data.Password
+			}
+			if data.Name != "" {
+				node.Name = data.Name
+			}
+			if len(data.Notes) > 0 {
+				for index, note := range node.Notes {
+					if note.NoteId == data.Notes[0].NoteId {
+						node.Notes[index] = data.Notes[0]
+						break
+					}
+				}
+			}
+
+		}
+		cache.dll.moveNodeToFront(node)
 		return true
 	}
-	if cache.dll.size() >= CACHE_CAPACITY {
-		delete(cache.storage, cache.dll.tail.UserId)
-		cache.dll.removeFromEnd()
-	}
-	cache.storage[data.UserId] = data
-	cache.dll.addToFront(data)
-	return len(cache.storage) == cache.dll.size()
+	return false
 }
 
 func (cache *TheCache) GetKey(id int) *Node {
 	node, ok := cache.storage[id]
 	if ok {
+		cache.dll.moveNodeToFront(node)
 		return node
 	}
 	return nil
 }
 
 func (cache *TheCache) GetUserKey(username string, password string) *Node {
-	// todo implementation neede
+	for _, node := range cache.storage {
+		if node.UserName == username && node.Password == password {
+			cache.dll.moveNodeToFront(node)
+			return node
+		}
+	}
+	return nil
 }
-
-// func main() {
-// 	neg := Node{
-// 		UserId:  12,
-// 		UserName: "nima",
-// 		Password: "159159",
-// 		Name:     "bookWorn",
-// 		Notes:    []Note{},
-// 	}
-// 	dll.AddToFront(&neg)
-// }
