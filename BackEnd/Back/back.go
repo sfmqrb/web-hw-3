@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/golang-jwt/jwt"
+	"golang.org/x/sync/singleflight"
 	"hw3/BackEnd/cache_client"
 	pb "hw3/BackEnd/cacheproto"
 	"io/ioutil"
@@ -10,8 +12,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/golang-jwt/jwt"
 )
 
 const (
@@ -68,7 +68,7 @@ type Config struct {
 var config Config
 var jwtTries = map[string]int{}
 var jwtTime = map[string]time.Time{}
-
+var requestGroup singleflight.Group
 var hmacSampleSecret = []byte("toooooooooooo secret")
 
 func probNotesToNotes(notes []*pb.Note) []responseNote {
@@ -127,7 +127,6 @@ func verifyJWT(tokenString string) string {
 func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("new req")
 	fmt.Println(r.Method)
-	//fmt.Println(r.Method)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization, jwt")
@@ -137,10 +136,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-	//fmt.Println(r.Method)
-	//check token
 	loginToken := r.Header.Get("jwt")
-	//fmt.Println(loginToken)
 	jwt := loginToken
 	var authorId string
 	if jwt == "" {
@@ -161,28 +157,26 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 		}
 		//jwt real
 	}
-	//extract front requestLogin
 	requestType, noteId, note, noteTitle, noteType, done := extractRequest(w, r)
-	//fmt.Println("NoteId:", noteId)
 	if done {
 		return
 	}
 	//Get data from cache
-	cRes, e := cache_client.RequestNoteCache(requestType, note, noteTitle, noteType, noteId, authorId)
+	cRes, e, shared := requestGroup.Do("RequestNoteCache", func() (interface{}, error) {
+		return cache_client.RequestNoteCache(requestType, note, noteTitle, noteType, noteId, authorId)
+	})
+	if shared {
+		fmt.Println("shared note request cache")
+	}
+	//cRes, e := cache_client.RequestNoteCache(requestType, note, noteTitle, noteType, noteId, authorId)
 	if e != nil {
 		print(e)
 	}
-	//handle req and Get res
-	//fmt.Println("cres: ")
-	//fmt.Println(cRes)
-	res, handleErr := handleNoteRequest(requestType, w, r, cRes)
+	res, handleErr := handleNoteRequest(requestType, w, r, cRes.(*pb.CacheNoteResponse))
 	if handleErr {
 		return
 	}
-	//send responseNote to front
-	//fmt.Println(res)
 	resJson, _ := json.Marshal(res)
-	//fmt.Println(string(resJson))
 	_, err := w.Write(resJson)
 	if err != nil {
 		return
@@ -190,25 +184,10 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 }
 func main() {
 	preLoad()
-	//headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
-	//originsOk := handlers.AllowedOrigins([]string{os.Getenv("ORIGIN_ALLOWED")})
-	//methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
-	//cors := handlers.CORS(
-	//	handlers.AllowedHeaders([]string{"content-type"}),
-	//	handlers.AllowedOrigins([]string{"*"}),
-	//	handlers.AllowCredentials(),
-	//)
-	//router := mux.NewRouter()
-	//router.HandleFunc("/signup", ac.SignUp).Methods("POST")
-	//router.HandleFunc("/signin", ac.SignIn).Methods("POST")
 	http.HandleFunc("/", HandleRequest)
-	//router.Use(cors)
 	cache_client.Connect()
 	log.Fatal(http.ListenAndServe(":"+config.Port, nil))
-	//http.HandleFunc("/", )
-	//if err := http.ListenAndServe(":"+config.Port, nil); err != nil {
-	//	log.Fatal(err)
-	//}
+	//http.lis
 }
 
 func preLoad() {
@@ -245,7 +224,6 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	//todo endpoint
 	urlList := strings.Split(r.URL.Path, "/")
 	var ActionType int
 	if urlList[1] == "users" {
@@ -256,13 +234,20 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	cRes := cache_client.RequestLoginCache(ActionType, loginData.UserName, loginData.Name, loginData.Password)
-	if cRes == nil {
+	cResRaw, e, shared := requestGroup.Do("RequestNoteCache", func() (interface{}, error) {
+		return cache_client.RequestLoginCache(ActionType, loginData.UserName, loginData.Name, loginData.Password)
+	})
+	if shared {
+		fmt.Println("shared login request cache")
+	}
+	if e != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	cRes := cResRaw.(*pb.CacheLoginResponse)
+	//cRes := cache_client.RequestLoginCache(ActionType, loginData.UserName, loginData.Name, loginData.Password)
 	var res responseLogin
+	res.MissCache = cRes.MissCache
 	if ActionType == Login {
 		if cRes.Exist {
 			if cRes.WrongPass {

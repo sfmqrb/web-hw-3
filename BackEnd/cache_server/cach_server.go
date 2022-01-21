@@ -95,7 +95,7 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 	switch in.RequestType {
 	case Login:
 		node := cache.GetUserKey(in.User, in.Pass)
-		if node != nil {
+		if node == nil {
 			res.MissCache = true
 			{
 				node = new(Node)
@@ -112,11 +112,14 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 					res.Notes = toMyNote(notes)
 					res.UserName = userObj.UserName
 					res.Name = userObj.Name
-					node.UserName = userObj.UserName
-					node.Name = userObj.Name
-					node.Password = userObj.Password
-					node.Notes = notes
-					cache.SetKey(node)
+					if res.UserId != "0" {
+						node.UserId = userObj.UserId
+						node.UserName = userObj.UserName
+						node.Name = userObj.Name
+						node.Password = userObj.Password
+						node.Notes = notes
+						cache.SetKey(node)
+					}
 				}
 			}
 		} else {
@@ -124,6 +127,7 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 			res.WrongPass = false
 			res.Notes = toMyNote(node.Notes)
 			res.UserName = node.UserName
+			res.UserId = strconv.Itoa(node.UserId)
 			res.Name = node.Name
 		}
 	case SignUp:
@@ -145,10 +149,12 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 				res.UserId = strconv.FormatInt(int64(userObj.UserId), 10)
 				res.Name = userObj.Name
 				res.UserName = userObj.UserName
-				node.Name = userObj.Name
-				node.UserName = userObj.UserName
-				node.Password = userObj.Password
-				cache.SetKey(node)
+				if res.UserId != "0" {
+					node.Name = userObj.Name
+					node.UserName = userObj.UserName
+					node.Password = userObj.Password
+					cache.SetKey(node)
+				}
 			}
 		}
 	}
@@ -190,13 +196,14 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			cacheData.Notes = []Note{noteObj}
 			exist := cache.SetExistingKey(cacheData)
 			if !exist {
+				res.MissCache = true
 				createCacheNode(aId, ctx)
 			}
 		}
 	case Del:
 		nId, _ := strconv.Atoi(in.NoteId)
 		aId, _ := strconv.Atoi(in.AuthorId)
-		noteObj := Note{NoteId: nId, AuthorId: aId}
+		noteObj := &Note{NoteId: nId, AuthorId: aId}
 		var err error
 		var r sql.Result
 		if aId == 0 {
@@ -210,12 +217,15 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			if rows > 0 {
 				res.Exist = true
 				res.Access = true
-				cacheData.CommandType = Del
-				cacheData.UserId = aId
-				cacheData.Notes = []Note{noteObj}
-				exist := cache.SetExistingKey(cacheData)
-				if !exist {
-					createCacheNode(aId, ctx)
+				if aId != 0 {
+					cacheData.CommandType = Del
+					cacheData.UserId = aId
+					cacheData.Notes = []Note{*noteObj}
+					exist := cache.SetExistingKey(cacheData)
+					if !exist {
+						res.MissCache = true
+						createCacheNode(aId, ctx)
+					}
 				}
 			}
 		} else {
@@ -231,7 +241,13 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			{
 				node = new(Node)
 				var notes []Note
-				err := db.NewSelect().Model(&notes).Where("author_id = ?", in.AuthorId).Scan(ctx)
+				var err error
+				if aid == 0 {
+					err = db.NewSelect().Model(&notes).Scan(ctx)
+
+				} else {
+					err = db.NewSelect().Model(&notes).Where("author_id = ?", in.AuthorId).Scan(ctx)
+				}
 				if err != nil {
 					fmt.Println(err)
 					res.Exist = false
@@ -239,17 +255,19 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 					res.Notes = toMyNote(notes)
 					res.Exist = true
 					res.Access = true
-					userObj := &user{}
-					err := db.NewSelect().Model(userObj).Where("user_id = ?", aid).Scan(ctx)
-					if err != nil {
-						// todo fosh
+					if aid != 0 {
+						userObj := &user{}
+						err := db.NewSelect().Model(userObj).Where("user_id = ?", aid).Scan(ctx)
+						if err != nil {
+							// todo fosh
+						}
+						node.UserId, _ = strconv.Atoi(in.AuthorId)
+						node.Notes = notes
+						node.Name = userObj.Name
+						node.UserName = userObj.UserName
+						node.Password = userObj.Password
+						cache.SetKey(node)
 					}
-					node.UserId, _ = strconv.Atoi(in.AuthorId)
-					node.Notes = notes
-					node.Name = userObj.Name
-					node.UserName = userObj.UserName
-					node.Password = userObj.Password
-					cache.SetKey(node)
 				}
 			}
 		} else {
@@ -263,7 +281,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 		if node == nil {
 			res.MissCache = true
 			{
-				noteObj := Note{}
+				noteObj := &Note{}
 				err := db.NewSelect().Model(noteObj).Where("note_id = ?", in.NoteId).Scan(ctx)
 				if err != nil {
 					fmt.Println(err)
@@ -276,10 +294,12 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 						Title:     noteObj.NoteTitle,
 						Type:      noteObj.NoteType,
 						Exist:     true,
-						Access:    in.AuthorId == strconv.Itoa(noteObj.AuthorId) || strconv.Itoa(noteObj.AuthorId) == "0",
-						MissCache: false,
+						Access:    in.AuthorId == strconv.Itoa(noteObj.AuthorId) || in.AuthorId == "0",
+						MissCache: true,
 					}
-					createCacheNode(aid, ctx)
+					if in.AuthorId != "0" {
+						createCacheNode(aid, ctx)
+					}
 				}
 			}
 		} else {
@@ -300,7 +320,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 	case Edit:
 		aId, _ := strconv.Atoi(in.AuthorId)
 		nId, _ := strconv.Atoi(in.NoteId)
-		noteObj := Note{
+		noteObj := &Note{
 			BaseModel: bun.BaseModel{},
 			Note:      in.Note,
 			NoteTitle: in.NoteTitle,
@@ -310,7 +330,6 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 		}
 		var err error
 		if aId == 0 {
-			// todo admin cache
 			_, err = db.NewUpdate().Model(noteObj).Where("note_id = ?", nId).Exec(ctx)
 		} else {
 			_, err = db.NewUpdate().Model(noteObj).Where("note_id = ? AND author_id = ?", nId, aId).Exec(ctx)
@@ -318,20 +337,21 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 		if err == nil {
 			res.Access = true
 			res.Exist = true
-			cacheData.CommandType = Edit
-			cacheData.UserId, _ = strconv.Atoi(in.AuthorId)
-			cacheData.Notes = []Note{noteObj}
-			exist := cache.SetExistingKey(cacheData)
-			if !exist {
-				createCacheNode(aId, ctx)
+			if aId != 0 {
+				cacheData.CommandType = Edit
+				cacheData.UserId, _ = strconv.Atoi(in.AuthorId)
+				cacheData.Notes = []Note{*noteObj}
+				exist := cache.SetExistingKey(cacheData)
+				if !exist {
+					res.MissCache = true
+					createCacheNode(aId, ctx)
+				}
 			}
 		} else {
 			res.Access = false
 			res.Exist = false
 		}
 	}
-	//var user_id int32 = int32(rand.Intn(100))
-	//todo handle request
 	err := a.Send(res)
 	if err != nil {
 		return err

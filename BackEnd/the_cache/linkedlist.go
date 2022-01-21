@@ -7,10 +7,10 @@ import (
 type Note struct {
 	bun.BaseModel `bun:"table:notes,alias:u"`
 	NoteId        int    `bun:"note_id,pk,autoincrement"`
-	Note          string `bun:"Note,notnull"`
+	Note          string `bun:"note,notnull"`
 	NoteTitle     string `bun:"title,notnull"`
-	AuthorId      int    `bun:"type,notnull"`
-	NoteType      string `bun:"author_id"`
+	NoteType      string `bun:"type,notnull"`
+	AuthorId      int    `bun:"author_id"`
 }
 
 //Notes could make error 'cause can't "append"

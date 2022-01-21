@@ -76,7 +76,7 @@ func RequestNoteCache(requestType int, note string, noteTitle string, noteType s
 	}
 	return recv, nil
 }
-func RequestLoginCache(requestType int, userName string, name string, pass string) *pb.CacheLoginResponse {
+func RequestLoginCache(requestType int, userName string, name string, pass string) (*pb.CacheLoginResponse, error) {
 	Ctx, _ := context.WithTimeout(context.Background(), 10*time.Minute)
 	loginReq := &pb.CacheLoginRequest{
 		RequestType: int32(requestType),
@@ -86,11 +86,11 @@ func RequestLoginCache(requestType int, userName string, name string, pass strin
 	}
 	cacheLoginResponse, err := C.CacheLoginRPC(Ctx, loginReq)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	recv, err := cacheLoginResponse.Recv()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return recv
+	return recv, nil
 }
