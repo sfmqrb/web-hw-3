@@ -31,7 +31,10 @@ function noteUrl(id) {
 // }
 
 export function getNotes() {
-  return http.get(apiEndpoint + "/all", getHeader());
+  if (localStorage.getItem("jwt")) {
+    return http.get(apiEndpoint + "/all", getHeader());
+  }
+  return { data: [] };
   // backend
   // return localStorage.getItem('notes');
 }
