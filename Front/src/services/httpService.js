@@ -38,6 +38,12 @@ axios.interceptors.response.use(null, (error) => {
     toast.error("You are not authorized to perform this action.");
   }
 
+  if (error.response && error.response.status === 429) {
+    console.log(window.location);
+    console.log(error.response);
+    toast.error("Too many requests! Please try again later.");
+  }
+
   if (!expectedError) {
     console.log(window.location);
     logger.log(error);
