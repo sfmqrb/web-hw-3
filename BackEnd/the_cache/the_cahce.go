@@ -51,7 +51,7 @@ type TheCache struct {
 
 func InitCache() TheCache {
 	storage := make(map[int]*Node)
-	configFile, err := ioutil.ReadFile("../cache_config.json")
+	configFile, err := ioutil.ReadFile("the_cache/cache_config.json")
 	var configuration map[string]int
 	json.Unmarshal([]byte(configFile), &configuration)
 	//json.Unmarshal(configFile, &configuration)
@@ -59,6 +59,8 @@ func InitCache() TheCache {
 	if err != nil {
 		CACHE_CAPACITY = 16
 	}
+	fmt.Print("max capacity ")
+	fmt.Print(CACHE_CAPACITY)
 	return TheCache{
 		dll:     &DoublyLinkedList{},
 		storage: storage,
