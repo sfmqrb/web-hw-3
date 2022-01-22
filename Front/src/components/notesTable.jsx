@@ -8,9 +8,14 @@ class NotesTable extends Component {
       path: "title",
       label: "Title",
       content: (note) => <Link to={`/notes/${note._id}`}>{note.title}</Link>,
-      sizeClass: "col-4",
+      sizeClass: "col-3",
     },
-    { path: "type.name", label: "Type" },
+    {
+      path: "type.name",
+      content: (note) => note.type || " ",
+      sizeClass: "col-3",
+      label: "Type",
+    },
     {
       path: "text",
       label: "Text",

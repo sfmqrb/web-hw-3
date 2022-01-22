@@ -54,7 +54,7 @@ class NoteForm extends Form {
   mapToViewModel(note) {
     return {
       title: note.data.title || "TITLE",
-      typeId: "Others",
+      typeId: note.data.type || "Others",
       text: note.data.text || "TEXT",
       _id: note.data._id || "-1",
     };
