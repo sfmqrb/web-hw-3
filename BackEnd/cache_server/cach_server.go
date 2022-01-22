@@ -180,7 +180,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 	case Save:
 		{
 			aId, _ := strconv.Atoi(in.AuthorId)
-			noteObj := Note{
+			noteObj := &Note{
 				BaseModel: bun.BaseModel{},
 				Note:      in.Note,
 				AuthorId:  aId,
@@ -193,7 +193,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			}
 			cacheData.CommandType = Save
 			cacheData.UserId = aId
-			cacheData.Notes = []Note{noteObj}
+			cacheData.Notes = []Note{*noteObj}
 			exist := cache.SetExistingKey(cacheData)
 			if !exist {
 				res.MissCache = true
@@ -307,7 +307,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 			note := findNodeById(node.Notes, nId)
 			if note != nil {
 				res.Exist = true
-				res.Access = false
+				res.Access = true
 				res.Note = note.Note
 				res.Title = note.NoteTitle
 				res.Type = note.NoteType
