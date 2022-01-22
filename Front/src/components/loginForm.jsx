@@ -20,6 +20,9 @@ class LoginForm extends Form {
     const { data } = this.state;
     const output = await login(data.username, data.password);
     console.log(output);
+    if (output.data && output.data.misscache) {
+      toast.warn("MissCached in the GET(all) request happened");
+    }
     localStorage.setItem("jwt", output.data["jwt"]);
     localStorage.setItem("notes", JSON.stringify(output.data["notes"]));
     localStorage.setItem("name", output.data["name"]);
