@@ -148,7 +148,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 		authorId = verifyJWT(jwt)
 		if authorId == "" {
 			//jwt unreal
-			w.WriteHeader(http.StatusNonAuthoritativeInfo)
+			w.WriteHeader(419)
 			return
 		} else if authorId == "l" {
 			//try limit reached
