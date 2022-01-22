@@ -9,7 +9,7 @@ class NoteForm extends Form {
   state = {
     data: {
       title: "",
-      typeId: "",
+      type: "",
       text: "",
     },
     types: [],
@@ -19,7 +19,7 @@ class NoteForm extends Form {
   schema = {
     _id: Joi.string(),
     title: Joi.string().required().label("Title"),
-    typeId: Joi.string().required().label("Type"),
+    type: Joi.string().required().label("Type"),
     text: Joi.string().required().label("Text"),
   };
 
@@ -54,7 +54,7 @@ class NoteForm extends Form {
   mapToViewModel(note) {
     return {
       title: note.data.title || "TITLE",
-      typeId: note.data.type || "Others",
+      type: note.data.type || "Others",
       text: note.data.text || "TEXT",
       _id: note.data._id || "-1",
     };
@@ -73,7 +73,7 @@ class NoteForm extends Form {
         <h1>Note Form</h1>
         <form onSubmit={this.handleSubmit}>
           {this.renderInput("title", "Title")}
-          {this.renderSelect("typeId", "Type", this.state.types)}
+          {this.renderSelect("type", "Type", this.state.types)}
           {this.renderInput("text", "Text", "text", "textarea")}
           {this.renderButton("Save")}
         </form>

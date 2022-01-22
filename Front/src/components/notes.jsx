@@ -26,6 +26,7 @@ class Notes extends Component {
   async componentDidMount() {
     const types = [{ _id: "", name: "All Types" }, ...getTypes()];
     const x = await getNotes();
+    console.log(x);
     if (x.data && x.data.misscache) {
       toast.warn("MissCached in the GET(all) request happened");
     }
