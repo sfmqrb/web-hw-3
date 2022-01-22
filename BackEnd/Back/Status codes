@@ -5,3 +5,5 @@ get no access note id           http.StatusUnauthorized 401
 edit no note id                 http.StatusUnauthorized 401
 delete no note id               http.StatusUnauthorized 401
 badRequest                      http.StatusBadRequest 400
+tooManyRequest                  http.StatusTooManyRequest 429
+bad jwt                         http.StatusNonAuthoritativeInfo 203

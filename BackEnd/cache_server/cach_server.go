@@ -152,8 +152,10 @@ func (s *CacheManagementServer) CacheLoginRPC(in *pb.CacheLoginRequest, a pb.Cac
 				res.UserName = userObj.UserName
 				if res.UserId != "0" {
 					node.Name = userObj.Name
+					node.UserId = userObj.UserId
 					node.UserName = userObj.UserName
 					node.Password = userObj.Password
+					fmt.Println("new user cache node made")
 					cache.SetKey(node)
 				}
 			}
@@ -361,7 +363,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 }
 func connectToDB() {
 	// Open a PostgreSQL database.
-	dsn := "postgres://postgres:test123@localhost:5432/postgres?sslmode=disable"
+	dsn := "postgres://postgres:admin@localhost:5432/postgres?sslmode=disable"
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	// Create a Bun db on top of it.
 	db = bun.NewDB(pgdb, pgdialect.New())
