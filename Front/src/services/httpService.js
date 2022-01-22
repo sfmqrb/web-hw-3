@@ -44,6 +44,13 @@ axios.interceptors.response.use(null, (error) => {
     toast.error("Too many requests! Please try again later.");
   }
 
+  if (error.response && error.response.status === 203) {
+    console.log(window.location);
+    console.log(error.response);
+    alert("Please Login again! Your session has expired.");
+    window.location = "/login";
+  }
+
   if (!expectedError) {
     console.log(error);
     console.log(window.location);
