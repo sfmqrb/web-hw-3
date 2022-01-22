@@ -125,8 +125,8 @@ func verifyJWT(tokenString string) string {
 	}
 }
 func HandleRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("new req")
-	fmt.Println(r.Method)
+	//fmt.Println("new req")
+	//fmt.Println(r.Method)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Authorization, jwt")
@@ -255,7 +255,7 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 			} else {
 				w.WriteHeader(http.StatusAccepted)
 				//todo Config session length
-				jwt := createJWT(20, cRes.UserId)
+				jwt := createJWT(config.SessionLimit, cRes.UserId)
 				res.Jwt = jwt
 				res.Notes = probNotesToNotes(cRes.Notes)
 				res.Name = cRes.Name
@@ -267,7 +267,7 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 		if cRes.Exist {
 			w.WriteHeader(http.StatusNotAcceptable)
 		} else {
-			jwt := createJWT(20, cRes.UserId)
+			jwt := createJWT(config.SessionLimit, cRes.UserId)
 			res.Jwt = jwt
 			res.Name = cRes.Name
 			w.WriteHeader(http.StatusCreated)
@@ -275,8 +275,8 @@ func handleLoginRequest(w http.ResponseWriter, r *http.Request) {
 	}
 	resJson, _ := json.Marshal(res)
 	//fmt.Println(res)
-	b, errw := w.Write(resJson)
-	fmt.Println(b)
+	_, errw := w.Write(resJson)
+	//fmt.Println(b)
 	if errw != nil {
 		return
 	}
@@ -297,9 +297,9 @@ func extractRequest(w http.ResponseWriter, r *http.Request) (int, string, string
 	} else if len(urlList) == 3 {
 		noteId = urlList[2]
 	}
-	fmt.Println(urlList)
-	fmt.Println(len(urlList))
-	fmt.Println(noteId)
+	//fmt.Println(urlList)
+	//fmt.Println(len(urlList))
+	//fmt.Println(noteId)
 	//} else if len(urlList) == 2 {
 	//
 	//} else {
