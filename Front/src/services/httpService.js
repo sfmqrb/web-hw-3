@@ -45,6 +45,7 @@ axios.interceptors.response.use(null, (error) => {
   }
 
   if (!expectedError) {
+    console.log(error);
     console.log(window.location);
     logger.log(error);
     toast.error("An unexpected error occurrred.");

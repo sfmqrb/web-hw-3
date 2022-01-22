@@ -7,7 +7,8 @@ const apiEndpoint = apiUrl + "/notes";
 function getHeader() {
   return {
     headers: {
-      jwt: localStorage.getItem("jwt"),
+      jwt: localStorage.getItem("jwt") || "",
+
       // jwt: "X",
       "Content-Type": "application/json",
     },
