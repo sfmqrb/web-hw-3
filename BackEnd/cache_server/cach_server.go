@@ -363,7 +363,7 @@ func (s *CacheManagementServer) CacheNoteRPC(in *pb.CacheNoteRequest, a pb.Cache
 }
 func connectToDB() {
 	// Open a PostgreSQL database.
-	dsn := "postgres://postgres:admin@localhost:5432/postgres?sslmode=disable"
+	dsn := "postgres://postgres:test123@localhost:5432/postgres?sslmode=disable"
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	// Create a Bun db on top of it.
 	db = bun.NewDB(pgdb, pgdialect.New())
