@@ -105,15 +105,18 @@ class Notes extends Component {
     } = this.state;
 
     let filtered = allNotes;
-    if (searchQuery)
+    if (searchQuery) {
       filtered = allNotes.filter(
         (m) =>
           m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           m.text.toLowerCase().includes(searchQuery.toLowerCase())
       );
-    else if (selectedType && selectedType._id)
-      filtered = allNotes.filter((m) => m.type._id === selectedType._id);
-
+      console.log(searchQuery);
+    } else if (selectedType && selectedType._id) {
+      // console.log(selectedType._id);
+      // console.log(allNotes);
+      filtered = allNotes.filter((m) => m.type === selectedType._id);
+    }
     const sorted = _.orderBy(filtered, [sortColumn.path], [sortColumn.order]);
 
     const notes = paginate(sorted, currentPage, pageSize);
